@@ -1,4 +1,4 @@
-// Motion-graphics timeline: seasonal-jobs registration guide (Al Rifadah, Hajj 1447H).
+// Motion-graphics timeline: seasonal-jobs registration guide (Al Rifadah, Hajj 1448H).
 // Deterministic: the renderer calls window.seek(t) for every frame.
 const P = new URLSearchParams(location.search);
 const W = +P.get('w') || 1080, H = +P.get('h') || 1920;
@@ -31,7 +31,7 @@ const fld = (label, req, inner = '<div class="bar"></div>', cls = '') =>
 const words = s => s.split(' ').map(w => `<span class="w">${w}</span>`).join(' ');
 const head = (badge, title, sub) =>
   `<div class="head"><div class="badge">${badge}</div><div class="title">${words(title)}</div><div class="sub">${sub}</div></div>`;
-const chrome = `<div class="chrome"><div><b>التقديم للوظائف الموسمية</b><small>موسم حج 1447هـ</small></div><img src="assets/logo.png"></div>`;
+const chrome = `<div class="chrome"><div><b>التقديم للوظائف الموسمية</b><small>موسم حج 1448هـ</small></div><img src="assets/logo.png"></div>`;
 
 // ---------------------------------------------------------------- background
 stage.insertAdjacentHTML('beforeend', `
@@ -57,7 +57,7 @@ addScene('intro', `
   <div class="logo-card"><img src="assets/logo.png"></div>
   <div class="kicker">شركة الرفادة لخدمات الحجاج</div>
   <div class="mega">${words('التوظيف الموسمي')}</div>
-  <div class="pill">موسم حج 1447هـ</div>
+  <div class="pill">موسم حج 1448هـ</div>
   <div class="sub">كن جزءًا من فريق خدمة ضيوف الرحمن</div>`, 'center');
 
 addScene('login', head('البداية', 'الدخول إلى البوابة', 'أدخل رقم الهوية ورقم الجوال، ثم أكّد بكود التحقق الذي يصلك') + `
@@ -172,7 +172,7 @@ addScene('s7', head('الخطوة 7', 'الطلب', 'اختر موقع العم�
     <span class="link">اضغط هنا للاطلاع على الاشتراطات العامة</span>
     <div class="agree"><div class="box">${I.check}</div>تم الاطلاع والموافقة على الاشتراطات العامة</div>
     <div class="btn block go">إرسال<i class="ripple"></i></div>
-    <div class="terms"><div class="tt"></div><b>متطلبات التوظيف الموسمي لحج عام 1447هـ</b>
+    <div class="terms"><div class="tt"></div><b>متطلبات التوظيف الموسمي لحج عام 1448هـ</b>
       ${'<div class="l"></div>'.repeat(3)}<div class="l" style="width:70%"></div>${'<div class="l"></div>'.repeat(2)}<div class="l" style="width:55%"></div></div>
     ${CURSOR}
   </div></div>`);
@@ -190,7 +190,7 @@ addScene('ok', head('تم بنجاح', 'تم تسجيل طلبك', 'تظهر ر�
 addScene('cta', `
   <div class="logo-card"><img src="assets/logo.png"></div>
   <div class="mega">${words('سجّل الآن')}</div>
-  <div class="sub" style="font-weight:700">التوظيف الموسمي لموسم حج 1447هـ</div>
+  <div class="sub" style="font-weight:700">التوظيف الموسمي لموسم حج 1448هـ</div>
   <div class="row"><div class="pill ghost">مكة المكرمة</div><div class="pill ghost">المدينة المنورة</div></div>
   <div class="support"><div class="ic">${I.phone}</div><div><small>للدعم الفني</small><b class="ltr">012-541-4423</b></div></div>
   <div class="hint">${I.link}رابط التسجيل في الوصف</div>`, 'center');
