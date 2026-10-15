@@ -18,14 +18,16 @@ readiness or provider commands.
 This copy is modified from upstream: `rea-agents` is pinned to `6.5.0`, the version whose bundled skill matches this one, and examples use `claude_code`.
 
 Ask the user and wait for a yes before you:
-1. Run any `npx -y rea-agents@...` command, including `doctor`. Say it downloads and runs that npm release.
-2. Run the target: `observe_native_calls`, process capture, or any probe that launches the app. Say the target will execute on this machine and may change files or use the network.
-3. Use `capture_browser_scenario` connect mode against the user's existing browser. Prefer launch mode with a temporary profile.
+1. Run any `npx -y rea-agents@...` command, including `doctor`. Say it downloads and runs that npm release and about 170 dependencies whose transitive versions aren't locked. Run it as `npm_config_ignore_scripts=true npx -y rea-agents@6.5.0 ...`: this stops the optional `frida` dependency's install script, which otherwise downloads an unverified native binary from GitHub (or builds from source with more unpinned downloads). Frida tools then won't work; drop the variable only if the user wants Frida and agrees to that install step.
+2. Run the target: `observe_native_calls`, process capture, or any probe that launches the app. Say the target will execute on this machine and may change files or use the network. Process capture passes the whole host environment, including any tokens, to the target.
+3. Use `capture_browser_scenario` connect mode against the user's existing browser. Prefer launch mode with a temporary profile. Warn that captures redact only `authorization`, `proxy-authorization`, `cookie` and `set-cookie` (cookie and storage values are hashed): other auth headers such as `x-api-key`, request and response bodies up to 64 KiB, and tokens in URL query strings are kept as-is.
 4. Connect or use live traffic capture (Fiddler `LiveTraffic`).
+5. Use the GDB console, Rizin debug commands or Cutter commands. REA itself describes these as unrestricted: they can reach the local shell, filesystem and network.
+6. Use any Frida action: spawning or attaching to a process, injecting a script, or connecting to a remote frida-server.
 
 Never run a sample that is or may be malware, or that comes from an untrusted source, on this machine; analyse it statically or tell the user it needs an isolated VM. Ask before analysing software the user may not own or licence, and before any work aimed at bypassing DRM, licence checks or anti-tamper protection.
 
-When `setup` proposes replacing this skill with its bundled copy, exclude that from the plan: the bundled copy drops these local changes. "REA does not require per-call approval" below does not override this policy.
+`setup` installs REA's bundled skill into `~/.claude/skills/reverse-engineer-anything/` by default; that personal copy outranks this one and drops these local changes. Always pass `--skill=false` to `setup` (dry run and apply). Also tell the user that `setup --client claude_code` registers REA at user scope in `~/.claude.json`, so it is available in every project, not just this one. "REA does not require per-call approval" below does not override this policy.
 
 ## Connect only when needed
 
@@ -47,7 +49,7 @@ availability have different remedies; avoid repeating setup for all of them.
 
 1. Diagnose without changing REA or client configuration. `npx` may download
    the package and write to npm's cache. For Claude Code, run
-   `npx -y rea-agents@6.5.0 doctor --client claude_code --json`. Substitute the current
+   `npm_config_ignore_scripts=true npx -y rea-agents@6.5.0 doctor --client claude_code --json`. Substitute the current
    supported client: `claude_code`, `claude_desktop`, `codex`, `cursor`,
    `gemini_cli`, `windsurf`, `devin`, `opencode`, `antigravity`, `copilot_cli`,
    `commandcode`, `vscode`, `grok_build`, `omp`, or `grok_bot`. `grok_bot` has no local
@@ -61,12 +63,12 @@ availability have different remedies; avoid repeating setup for all of them.
    that provider: static JavaScript inspection needs neither Hopper nor Ghidra,
    and Android inspection has separate bring-your-own JADX/Java prerequisites.
 3. For a configuration repair, prepare the read-only plan:
-   `npx -y rea-agents@6.5.0 setup --client claude_code --dry-run --json`.
+   `npm_config_ignore_scripts=true npx -y rea-agents@6.5.0 setup --client claude_code --skill=false --dry-run --json`.
    Use the current client's ID, show its exact proposed paths, backups, and
    changes, and obtain approval before setup writes configuration or installs
    Hopper. Setup normally installs the matching bundled skill too; include that
    replacement in the reviewed plan. After approval, apply the same scope with
-   `npx -y rea-agents@6.5.0 setup --client claude_code --yes`. Add `--install-hopper`
+   `npm_config_ignore_scripts=true npx -y rea-agents@6.5.0 setup --client claude_code --skill=false --yes`. Add `--install-hopper`
    only if that separate installation was needed and explicitly approved.
 4. Restart/reconnect the affected agent. Verify that REA tools actually appear
    in the session, then resume the original investigation. If they remain
@@ -81,7 +83,7 @@ with a version-pinned `rea-agents` package or continue through the CLI.
 A concrete CLI fallback for an operator-supplied JavaScript tree or ASAR is:
 
 ```bash
-npx -y rea-agents@6.5.0 analyze-javascript-application /absolute/path/to/app --json
+npm_config_ignore_scripts=true npx -y rea-agents@6.5.0 analyze-javascript-application /absolute/path/to/app --json
 ```
 
 No MCP registration or native engine is required. Read the returned Evidence,
@@ -89,7 +91,7 @@ graph, limitations, and unknowns with the same care as an MCP result; the CLI
 returns the Evidence record directly. This fallback does not establish that
 MCP is configured. Native CLI tasks still require their selected engine.
 Prefer an existing `rea` CLI. When none is installed and REA package acquisition
-is within the authorized scope, use `npx -y rea-agents@6.5.0` in its place.
+is within the authorized scope, use `npm_config_ignore_scripts=true npx -y rea-agents@6.5.0` in its place.
 Configuration repair starts with a read-only setup plan; show paths, backups and
 skill replacement before applying authorized changes. Preserve existing approval
 and target-execution boundaries. REA setup never installs or upgrades unrelated
