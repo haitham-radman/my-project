@@ -56,6 +56,8 @@ The scan lists bundled files by type and greps for downloads, package installs, 
 
 If anything sends user data to a third party or runs code fetched at run time, state it plainly in the summary and the PR body.
 
+For a skill with bundled scripts, delegate this step to the `skill-security-reviewer` subagent with the skill folder path, and use its report (verdict, findings, PR notes). If its verdict is "Do not import", stop and ask the user before committing.
+
 ## 5. Smoke-test
 
 Run the cheapest real invocation the skill documents, with a tiny input in the scratchpad (e.g. a 3-line CSV). Node comes from nvm: run `. "$HOME/.nvm/nvm.sh"` first. If the skill bundles tests, run them with whatever is installed (`python3 -m unittest discover` if `pytest` is missing) and report pass/fail counts. Skip this step only if the skill has nothing runnable, and say so.
