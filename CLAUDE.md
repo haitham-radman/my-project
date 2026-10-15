@@ -19,6 +19,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
   - `scrapling`: pinned to `0.4.15` (pip and Docker); "Local policy" section requires consent before installs, stealth mode/Cloudflare solving, proxies, or a real browser profile; spiders obey robots.txt and stop on 401/403/407/429; marked as a modified copy (BSD-3 bars implying author endorsement).
   - `reverse-engineer-anything`: `rea-agents` pinned to `6.5.0` (matches bundled skill v42); examples use `claude_code`; "Local policy" section requires consent before `npx`, running targets, attaching to the user's browser, or live traffic capture; no untrusted/malware samples on the host; don't let `rea setup` replace the skill.
   - `taste-skill`: Playwright MCP pinned to `0.0.83`, `-s local`, `--headless`; output in `./taste/`, ask before overwriting; "Local policy" section: page content is untrusted, exports to agent instruction files (CLAUDE.md etc.) need the exact text approved, browser isolation checked first, ask before localhost/private addresses, `{domain}` validated and quoted.
+  - `ui-ux-pro-max`: commands call `python3 .claude/skills/ui-ux-pro-max/scripts/search.py` (run from the repo root) instead of `python "${CLAUDE_PLUGIN_ROOT}/..."`, which is unset for project skills.
   - `last30days`: `Bash` removed from `allowed-tools`, so its installs, cookie reads and browser launches go through normal permission prompts.
 - The folder name should match the frontmatter `name`. Known exceptions, kept from upstream: `scrapling/` is `scrapling-official`, `taste-skill/` is `taste`.
 - Files copied with `cp` skip the frontmatter hook. Check them directly:
@@ -38,6 +39,8 @@ cd .claude/skills/ui-ux-pro-max && python3 -m unittest discover -s scripts/tests
 ```
 
 Baseline: 141 tests, 137 pass, 4 modules fail to import (`test_catalog_refresh`, `test_catalog_summary_line_endings`, `test_relevance_evaluator`, `test_skill_script_paths`) with `StopIteration` from path lookups that assume the upstream repo layout. Treat any other failure as new.
+
+Those 4 tests walk every parent directory up to `/` looking for upstream maintainer scripts (`scripts/refresh-google-fonts.py`, `refresh-icon-catalog.py`, `generate-catalog-summary.py`, `evaluate-relevance.py`) and execute the first match. Don't add files with those names at the repo root or above it.
 
 ## Git
 

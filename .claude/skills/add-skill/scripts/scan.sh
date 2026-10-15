@@ -17,7 +17,7 @@ scan() {
   hits=$(grep -rnIE --exclude-dir=node_modules --exclude-dir=.git "$pattern" "$dir" 2>/dev/null | cut -c1-200 || true)
   echo
   echo "== $label ($(printf '%s' "$hits" | grep -c . || true)) =="
-  [ -n "$hits" ] && printf '%s\n' "$hits" | head -20
+  [ -n "$hits" ] && printf '%s\n' "$hits" | sed -n '1,20p'
   return 0
 }
 
