@@ -1,0 +1,40 @@
+# my-project
+
+A library of Claude Code skills, plus the hooks and agents that maintain it. There is no application code.
+
+## Layout
+
+- `.claude/skills/<name>/` — one folder per skill. All but `add-skill` are third-party.
+- `.claude/agents/skill-security-reviewer.md` — read-only reviewer for incoming skills.
+- `.claude/hooks/session-start.sh` — installs Node 24 via nvm in cloud sessions.
+- `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`.
+- `.claude/settings.json` — registers both hooks.
+
+## Adding or updating a skill
+
+- Use `/add-skill <pasted SKILL.md | git URL | path>`. It copies the skill, validates it, runs `skill-security-reviewer`, smoke-tests, and opens a PR.
+- Keep third-party skills exactly as published so they can be refreshed from upstream. Ask before changing their content.
+- The folder name should match the frontmatter `name`. Known exceptions, kept from upstream: `scrapling/` is `scrapling-official`, `taste-skill/` is `taste`.
+- Files copied with `cp` skip the frontmatter hook. Check them directly:
+  `printf '{"tool_input":{"file_path":"%s"}}' "$PWD/.claude/skills/<name>/SKILL.md" | python3 .claude/hooks/check-skill-frontmatter.py`
+
+## Environment
+
+- Node 24 comes from nvm. Shell state does not persist between Bash calls, so prefix Node commands with `. "$HOME/.nvm/nvm.sh" &&`; otherwise the preinstalled Node 22 runs.
+- `pytest` and `ruff` are not installed. Use `python3 -m unittest`.
+
+## Tests
+
+The only bundled suite is `ui-ux-pro-max`:
+
+```bash
+cd .claude/skills/ui-ux-pro-max && python3 -m unittest discover -s scripts/tests
+```
+
+Baseline: 141 tests, 137 pass, 4 modules fail to import (`test_catalog_refresh`, `test_catalog_summary_line_endings`, `test_relevance_evaluator`, `test_skill_script_paths`) with `StopIteration` from path lookups that assume the upstream repo layout. Treat any other failure as new.
+
+## Git
+
+- Branch from the latest `origin/main` for each change; PRs are squash-merged, so earlier branch commits are already on `main`.
+- One change per PR. Merge only when asked.
+- Don't commit `__pycache__/` (gitignored) or anything test runs leave behind.
