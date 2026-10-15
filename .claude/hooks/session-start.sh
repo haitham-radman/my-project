@@ -6,18 +6,21 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-NVM_VERSION="v0.40.8"
+# nvm v0.40.8, pinned by commit: a tag can be moved, a commit hash can't.
+NVM_COMMIT="a885b885fef16fac4bc544188fb25e9e37ae83e8"
 NODE_MAJOR="24"
 export NVM_DIR="$HOME/.nvm"
 
 if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-  curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | PROFILE=/dev/null bash >/dev/null
+  git clone -q https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+  git -C "$NVM_DIR" checkout -q "$NVM_COMMIT"
 fi
 
 # nvm.sh references unset variables, so relax -u while it runs.
 set +u
 . "$NVM_DIR/nvm.sh"
-nvm install "$NODE_MAJOR" >/dev/null
+# Skip the network when Node 24 is already installed (works offline).
+nvm which "$NODE_MAJOR" >/dev/null 2>&1 || nvm install "$NODE_MAJOR" >/dev/null
 nvm alias default "$NODE_MAJOR" >/dev/null
 NODE_BIN="$(dirname "$(nvm which "$NODE_MAJOR")")"
 set -u
