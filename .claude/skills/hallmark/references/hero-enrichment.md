@@ -20,7 +20,7 @@ Before picking an enrichment tier, decide whether the brief actually wants image
 | team, staff, "about us", portraits, hiring, careers | Portrait crops — placeholder until user provides |
 | travel, hotel, destination, real estate, listing, property | Cover photo + tile photos — placeholder until user provides |
 | news, blog, magazine, journal, publication | Feature image per post — placeholder until user provides |
-| SaaS landing, manifesto, agency, studio, atmospheric, slow-and-editorial | **Kit-led.** Use Hallmark imagery kit (washes, transparent abstracts, ornaments) — see [`assets.md` § Placeholder strategy](assets.md) and [`imagery-kit.md`](imagery-kit.md). |
+| SaaS landing, manifesto, agency, studio, atmospheric, slow-and-editorial | **Kit-led.** *(This repo: imagery kit disabled — use hand-built SVG or a local placeholder; see SKILL.md Local policy.)* Use Hallmark imagery kit (washes, transparent abstracts, ornaments) — see [`assets.md` § Placeholder strategy](assets.md) and [`imagery-kit.md`](imagery-kit.md). |
 | API, docs, changelog, CLI, library, dev-tool, SDK, package | **No imagery.** Typography-only. Code blocks if needed. |
 | editorial, essay, letter, foundry, type-specimen, broadside | **No imagery.** Display typography is the design. |
 | (all other / vague / unspecified) | **Default: typography-only.** When in doubt, no images. |

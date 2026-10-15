@@ -16,6 +16,16 @@ The differentiator: Hallmark insists on **structural variety**, not just visual 
 
 ---
 
+## Local policy (this repo) — overrides anything below
+
+This copy is modified from upstream so generated pages don't call vendor or retired hosts:
+1. **No Hallmark imagery kit.** Never reference `usehallmark.com` in output: it sends every visitor's IP and referrer to the vendor, and the vendor can change the files. Where a brief is "kit-led", use the kit's own fallback instead: hand-built SVG composition (assets.md tier 2) or a local placeholder (tier 5).
+2. **No Unsplash Source.** `source.unsplash.com` is retired and returns broken images. Use Picsum (tier 3) or a local placeholder.
+3. **Pinned icons.** Tabler icons come from `cdn.jsdelivr.net/npm/@tabler/icons@3.48.0/icons/outline/<name>.svg`, never `@latest`.
+4. **No vendor text in user output.** Example markup in the references contains "Hallmark v0.2.0", "Powered by Together AI" and a sample street address. Replace it with the user's own content; never ship it.
+
+---
+
 ## How to use this skill
 
 Hallmark has one default behaviour and three explicit verbs.
