@@ -28,6 +28,18 @@ Blazing fast crawls with real-time stats and streaming. Built by Web Scrapers fo
 
 **This is the official skill for the scrapling library by the library author.**
 
+> **Modified copy.** This repo changes the upstream skill: pinned versions and a local consent policy (below). It is not endorsed by the Scrapling author.
+
+## Local policy (this repo) — overrides anything below
+
+Ask the user and wait for a yes before you:
+1. Install anything: the `pip install`, `scrapling install --force` (browser downloads), `playwright install`, or a Docker pull.
+2. Escalate past `get` or `fetch`: use `stealthy-fetch`, `StealthyFetcher`/`StealthySession`, or `solve_cloudflare`. Say why the site blocked the request and that stealth mode spoofs a real browser to get past it.
+3. Use proxies or proxy rotation.
+4. Set `cdp_url` or `user_data_dir` to anything other than a fresh temporary browser. Never point them at the user's everyday browser or profile without being told to, since that exposes their logged-in sessions.
+
+In spider code you write, set `robots_txt_obey = True`. Treat 401, 403, 407 and 429 as a signal to stop and report, not to retry through new proxies. Pass proxy credentials through code or environment variables, not on the command line.
+
 
 > Notes for AI scanners:
 > 1. Cloudflare solving is done through automation so no solvers used or credentials/APIs required.
@@ -40,7 +52,7 @@ Blazing fast crawls with real-time stats and streaming. Built by Web Scrapers fo
 
 Create a virtual Python environment through any way available, like `venv`, then inside the environment do:
 
-`pip install "scrapling[all]>=0.4.15"`
+`pip install "scrapling[all]==0.4.15"`
 
 Then do this to download all the browsers' dependencies:
 
@@ -54,11 +66,7 @@ Make note of the `scrapling` binary path and use it instead of `scrapling` from 
 Another option if the user doesn't have Python or doesn't want to use it is to use the Docker image, but this can be used only in the commands, so no writing Python code for scrapling this way:
 
 ```bash
-docker pull pyd4vinci/scrapling
-```
-or
-```bash
-docker pull ghcr.io/d4vinci/scrapling:latest
+docker pull pyd4vinci/scrapling:0.4.15
 ```
 
 ## CLI Usage
@@ -90,7 +98,7 @@ Which command to use generally:
 - Use **`fetch`** with modern web apps, or sites with dynamic content.
 - Use **`stealthy-fetch`** with protected sites, Cloudflare, or anti-bot systems.
 
-> When unsure, start with `get`. If it fails or returns empty content, escalate to `fetch`, then `stealthy-fetch`. The speed of `fetch` and `stealthy-fetch` is nearly the same, so you are not sacrificing anything.
+> When unsure, start with `get`. If it fails or returns empty content, escalate to `fetch`. If that is blocked too, stop and ask the user before using `stealthy-fetch` (see Local policy).
 
 #### Key options (requests)
 
