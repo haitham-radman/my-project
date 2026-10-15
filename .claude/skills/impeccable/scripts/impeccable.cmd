@@ -19,6 +19,9 @@ rem   ARM64 the arm64 asset is tried first and the x64 asset is the
 rem   fallback (Windows on ARM runs x64 binaries).
 if not defined IMPECCABLE_SKILL_DIR set "IMPECCABLE_SKILL_DIR=%~dp0.."
 if not defined IMPECCABLE_SELF set "IMPECCABLE_SELF=%~f0"
+rem Local change (this repo): downloaded and cached engines must match a hash
+rem pinned in engine-sha256.txt, not just the release's own .sha256 sidecar.
+set "pins=%~dp0engine-sha256.txt"
 set "arch=x64"
 if /I "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
 
@@ -49,6 +52,8 @@ if not defined IMPECCABLE_HOME set "IMPECCABLE_HOME=%USERPROFILE%\.impeccable"
 set "cached=%IMPECCABLE_HOME%\bin\%version%\impeccable.exe"
 if not defined version goto no_cache
 if not exist "%cached%" goto no_cache
+call :hash_pinned "%cached%"
+if not "%hash_ok%"=="1" goto cache_unpinned
 set "run=%cached%"
 goto run
 :no_cache
@@ -116,10 +121,43 @@ del "%cached%.sha256" >nul 2>nul
 if not defined expected goto verify_refuse
 if not defined actual goto verify_refuse
 set "actual=%actual: =%"
-if /I "%actual%"=="%expected%" goto place
+if /I "%actual%"=="%expected%" goto pin_check
 del "%cached%.part" >nul 2>nul
 echo impeccable: checksum mismatch downloading %url% 1>&2
 exit /b 127
+
+:pin_check
+set "pinned="
+if exist "%pins%" for /f "usebackq eol=# tokens=1,2,3" %%a in ("%pins%") do if "%%a"=="%version%" if /I "%%b"=="%asset%" set "pinned=%%c"
+if not defined pinned goto pin_missing
+if /I "%actual%"=="%pinned%" goto place
+del "%cached%.part" >nul 2>nul
+echo impeccable: %url% does not match the checksum pinned in %pins%; refusing the download 1>&2
+exit /b 127
+
+:pin_missing
+del "%cached%.part" >nul 2>nul
+echo impeccable: no pinned checksum for %asset% version %version% in %pins%; refusing the download 1>&2
+exit /b 127
+
+:cache_unpinned
+echo impeccable: cached engine %cached% does not match a hash pinned in %pins% for version %version%; refusing to run it. Delete it to re-download, or check how it got there. 1>&2
+exit /b 127
+
+:hash_pinned
+rem Sets hash_ok=1 when the SHA-256 of %1 is pinned for %version%.
+set "hash_ok="
+set "pin_hash="
+set "hp_tmp=%TEMP%\impeccable-hash-%RANDOM%%RANDOM%.txt"
+certutil -hashfile "%~1" SHA256 >"%hp_tmp%" 2>nul
+if errorlevel 1 goto hash_pinned_done
+for /f "usebackq skip=1 delims=" %%h in ("%hp_tmp%") do if not defined pin_hash set "pin_hash=%%h"
+if not defined pin_hash goto hash_pinned_done
+set "pin_hash=%pin_hash: =%"
+if exist "%pins%" for /f "usebackq eol=# tokens=1,3" %%a in ("%pins%") do if "%%a"=="%version%" if /I "%%b"=="%pin_hash%" set "hash_ok=1"
+:hash_pinned_done
+del "%hp_tmp%" >nul 2>nul
+exit /b 0
 
 :verify_refuse
 call :check_download
