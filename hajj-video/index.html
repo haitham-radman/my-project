@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"><title>رحلة الحاج</title>
+<style>
+@font-face{font-family:'CairoV';font-weight:400;src:url(assets/cairo-arabic-400-normal.woff2) format('woff2')}
+@font-face{font-family:'CairoV';font-weight:700;src:url(assets/cairo-arabic-700-normal.woff2) format('woff2')}
+@font-face{font-family:'CairoV';font-weight:800;src:url(assets/cairo-arabic-800-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000;overflow:hidden}
+svg{display:block}
+text{font-family:'CairoV','DejaVu Sans',sans-serif}
+</style></head><body>
+<svg id="stage" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<g id="scene"></g>
+<image id="logoBig" href="assets/logo.png" x="0" y="0" width="440" height="402" opacity="0"/>
+<g id="ui"></g>
+<g id="badge" opacity="0">
+  <rect x="48" y="44" width="196" height="180" rx="24" fill="#fff" opacity=".97"/>
+  <image href="assets/logo.png" x="60" y="53" width="172" height="157"/>
+</g>
+<g id="fx"></g>
+</svg>
+<script>
+/* ================= palette (taken from the Alrifada logo) ================= */
+const R='#A80713', RD='#7a050f', K='#0d0d0e', W='#ffffff';
+const SAND1='#fbf7f1', SAND2='#efe6da', SAND3='#e2d5c4', SAND4='#cdbda8', G2='#d9d3cb', G3='#8a857e';
+const SK=['#c58c5e','#9a6540','#e1b08a','#6f4a31'];
+
+/* ================= helpers ================= */
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const eio=t=>{t=clamp(t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2};
+const eo=t=>{t=clamp(t);return 1-Math.pow(1-t,3)};
+const ei=t=>{t=clamp(t);return t*t*t};
+const eob=t=>{t=clamp(t);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2)};
+const seg=(p,a,b)=>clamp((p-a)/(b-a));
+const mod=(a,n)=>((a%n)+n)%n;
+function hex2rgb(h){h=h.replace('#','');return [0,2,4].map(i=>parseInt(h.substr(i,2),16))}
+function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const f1=n=>n.toFixed(1);
+
+const rect=(x,y,w,h,f,rx=0,e='')=>`<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" rx="${rx}" fill="${f}" ${e}/>`;
+const circ=(x,y,r,f,e='')=>`<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="${f}" ${e}/>`;
+const ell=(x,y,rx,ry,f,e='')=>`<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="${f1(rx)}" ry="${f1(ry)}" fill="${f}" ${e}/>`;
+const path=(d,f,e='')=>`<path d="${d}" fill="${f}" ${e}/>`;
+const txt=(x,y,s,size,w,f,anchor='middle',e='')=>`<text x="${f1(x)}" y="${f1(y)}" font-size="${size}" font-weight="${w}" fill="${f}" text-anchor="${anchor}" ${e}>${s}</text>`;
+const grad=(id,c1,c2)=>`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`;
+const cv=document.createElement('canvas').getContext('2d');
+function tw(s,size,w){cv.font=`${w} ${size}px CairoV`;return cv.measureText(s).width}
+function fit(s,size,w,max){const x=tw(s,size,w);return x>max?size*max/x:size}
+
+/* logo-inspired mark: two offset arcs + rounded diamond */
+function mark(x,y,r,rot=0,op=1){
+  return `<g transform="translate(${f1(x)},${f1(y)}) rotate(${f1(rot)})" opacity="${op}">
+  <circle r="${r}" fill="none" stroke="${K}" stroke-width="${r*.16}" stroke-dasharray="${r*3.4} ${r*3}" transform="rotate(200)"/>
+  <circle r="${r*.84}" fill="none" stroke="${R}" stroke-width="${r*.16}" stroke-dasharray="${r*3.3} ${r*2}" transform="rotate(30)"/>
+  <rect x="${-r*.22}" y="${-r*.22}" width="${r*.44}" height="${r*.44}" rx="${r*.1}" fill="${K}" transform="rotate(45)"/></g>`}
+
+function person(x,y,s,i,st,mode,o={}){
+  const skin=SK[i%4], fem=(i%3===1), cloth=fem?'#18181b':'#ffffff';
+  const walk=mode==='walk', ph=st*8+i*1.7;
+  const sw=walk?Math.sin(ph):0, bob=walk?Math.abs(Math.sin(ph))*3:0;
+  let g=`<g transform="translate(${f1(x)},${f1(y-bob)}) scale(${s})" ${o.op!=null?`opacity="${f1(o.op*100)/100}"`:''}>`;
+  g+=ell(0,bob+1,19,5,'rgba(0,0,0,.17)');
+  g+=`<path d="M-6,-16 L${f1(-6+sw*8)},0 M6,-16 L${f1(6-sw*8)},0" stroke="${fem?'#000':skin}" stroke-width="5" stroke-linecap="round" fill="none"/>`;
+  g+=path('M-13,-58 Q0,-68 13,-58 L17,-14 L-17,-14Z',cloth,fem?'':'stroke="#d9d3cb" stroke-width="1.5"');
+  if(!fem) g+=path('M-13,-58 Q-5,-63 0,-57 L-9,-46Z',skin);
+  const ac=fem?'#000':skin;
+  if(mode==='pray'){const up=Math.sin(st*2.2+i)*3;g+=`<path d="M-12,-54 L-21,${f1(-74+up)} M12,-54 L21,${f1(-74+up)}" stroke="${ac}" stroke-width="4.5" stroke-linecap="round" fill="none"/>`}
+  else if(mode==='throw'){g+=`<path d="M-12,-54 L-15,-32 M12,-54 L24,${f1(-84+(o.arm||0)*30)}" stroke="${ac}" stroke-width="4.5" stroke-linecap="round" fill="none"/>`}
+  else if(walk){g+=`<path d="M-12,-54 L${f1(-14-sw*6)},-32 M12,-54 L${f1(14+sw*6)},-32" stroke="${ac}" stroke-width="4.5" stroke-linecap="round" fill="none"/>`}
+  else g+=`<path d="M-12,-54 L-15,-32 M12,-54 L15,-32" stroke="${ac}" stroke-width="4.5" stroke-linecap="round" fill="none"/>`;
+  if(fem){g+=circ(0,-76,12,'#000')+circ(0,-75,7.5,skin)}
+  else{g+=circ(0,-76,9,skin);g+=path('M-9,-78 A9,9 0 0 1 9,-78Z',i%2?'#1c1c1c':'#f1ede6')}
+  if(o.bag){g+=`<path d="M17,-34 L27,-26" stroke="${ac}" stroke-width="4"/>`+rect(17,-26,28,22,i%2?R:K,4)+`<path d="M26,-26 V-31 H36 V-26" stroke="${K}" stroke-width="3" fill="none"/>`}
+  return g+'</g>'}
+
+function sitter(x,y,s,i,st){
+  const fem=(i%3===1), skin=SK[i%4], bob=Math.sin(st*1.3+i)*1.5;
+  return `<g transform="translate(${f1(x)},${f1(y)}) scale(${s})">`+ell(0,2,24,6,'rgba(0,0,0,.35)')+
+   path('M-22,0 Q-24,-34 0,-42 Q24,-34 22,0Z',fem?'#2a2a2e':'#f4f0ea')+circ(0,-50+bob,10,fem?'#000':skin)+(fem?circ(0,-49+bob,7,skin):'')+'</g>'}
+
+function cloud(x,y,s,op=1){return `<g transform="translate(${f1(x)},${f1(y)}) scale(${s})" opacity="${op}">${ell(0,0,90,28,'#fff')}${ell(-45,-16,44,32,'#fff')}${ell(28,-26,54,38,'#fff')}</g>`}
+
+function plane(x,y,s,th,gear){
+  const flip=Math.cos(th)<0;
+  let g=`<g transform="translate(${f1(x)},${f1(y)}) rotate(${f1(th*180/Math.PI)}) scale(${s},${flip?-s:s})">`;
+  g+=path('M-190,-30 L-238,-128 L-172,-128 L-100,-34Z',R);
+  g+=path('M30,6 L-60,72 L-18,72 L118,6Z','#c9c1b5');
+  g+=rect(-16,44,76,26,K,13);
+  g+=path('M-212,0 Q-218,-32 -170,-40 L150,-40 Q214,-36 234,-4 Q214,26 150,28 L-170,28 Q-218,24 -212,0Z','#fff','stroke="#c9c1b5" stroke-width="2"');
+  g+=path('M-208,4 L228,4 L231,14 L-206,16Z',R);
+  for(let i=0;i<15;i++) g+=circ(-150+i*20,-18,5,K);
+  g+=path('M172,-34 L206,-34 Q222,-30 226,-18 L170,-18Z',K);
+  if(gear) g+=`<path d="M-60,28 V62 M112,28 V62" stroke="${K}" stroke-width="7"/>`+circ(-60,68,13,K)+circ(112,68,13,K);
+  return g+'</g>'}
+
+function bus(x,y,s,rot){
+  let g=`<g transform="translate(${f1(x)},${f1(y)}) scale(${-s},${s})">`;
+  g+=ell(0,3,205,11,'rgba(0,0,0,.22)');
+  g+=rect(-190,-150,380,124,'#fff',20,'stroke="#c9c1b5" stroke-width="2"');
+  for(let i=0;i<5;i++) g+=rect(-172+i*52,-134,44,46,K,7);
+  g+=path('M120,-134 L172,-134 Q186,-134 186,-120 L186,-88 L120,-88Z',K);
+  g+=rect(-190,-66,380,20,R);
+  g+=mark(-120,-77,11)+mark(20,-77,11);
+  g+=rect(-70,-162,140,12,G2,5);
+  for(const wx of [-120,110]){g+=circ(wx,-26,26,K)+circ(wx,-26,11,G2)+`<g transform="translate(${wx},-26) rotate(${f1(rot)})"><path d="M-10,0H10M0,-10V10" stroke="#555" stroke-width="3"/></g>`}
+  g+=circ(184,-52,6,'#fff6d8')+rect(-192,-60,5,16,R);
+  return g+'</g>'}
+
+/* ================= static random data ================= */
+const rnd=mulberry32(2026);
+const SKY1=[],SKY2=[];
+(function(){let x=-40;while(x<2000){const w=60+rnd()*80,h=70+rnd()*150;SKY1.push([x,w,h]);x+=w+8}
+ x=-20;while(x<2000){const w=50+rnd()*60,h=40+rnd()*100;SKY2.push([x,w,h]);x+=w+4}})();
+const STARS=Array.from({length:110},()=>[rnd()*1920,rnd()*700,.8+rnd()*2,rnd()*6]);
+const CLOUDS=Array.from({length:7},()=>[rnd()*2400,80+rnd()*420,.7+rnd()*.9,40+rnd()*70]);
+const CROWD=[];(function(){const r=mulberry32(5);for(let row=0;row<5;row++){const y=770+row*36,s=.78+row*.13;let x=-20+r()*40;while(x<1960){CROWD.push([x+r()*18,y+r()*8,s,CROWD.length]);x+=64-row*6+r()*14}}})();
+const TAWAF=[];(function(){const r=mulberry32(9);for(let ring=0;ring<5;ring++){const n=16+ring*9;for(let k=0;k<n;k++)TAWAF.push([ring,k/n*Math.PI*2+r()*.2,TAWAF.length])}})();
+const SIT=[];(function(){const r=mulberry32(21);for(let row=0;row<4;row++){const y=800+row*40,s=.7+row*.14;let x=r()*50;while(x<1960){if(Math.abs(x-960)>150||row>1)SIT.push([x,y+r()*8,s,SIT.length]);x+=70-row*6+r()*18}}})();
+
+/* ================= shared scene parts ================= */
+function pin(x,y,label,pulse){
+  const w=tw(label,32,700)+48;
+  let g='';
+  if(pulse>0){g+=`<circle cx="${x}" cy="${y-60}" r="${20+pulse*60}" fill="none" stroke="${R}" stroke-width="4" opacity="${1-pulse}"/>`}
+  g+=path('M0,0 C-30,-30 -36,-48 -36,-60 A36,36 0 1 1 36,-60 C36,-48 30,-30 0,0Z',R,`transform="translate(${x},${y})"`);
+  g+=circ(x,y-60,13,'#fff');
+  g+=rect(x-w/2,y+16,w,50,'#fff',25,`stroke="${R}" stroke-width="3"`)+txt(x,y+51,label,32,700,K);
+  return g}
+
+function sFlight(s,p,sc){
+  const rev=sc.rev;
+  let g=`<defs>${grad('fs',SAND1,SAND2)}</defs>`+rect(0,0,1920,1080,'url(#fs)');
+  g+=circ(960,400,360,R,'opacity=".05"')+circ(960,400,240,R,'opacity=".06"');
+  for(const [x0,y,sc2,sp] of CLOUDS) g+=cloud(mod(x0-s*sp-sp*3,2500)-300,y,sc2,.95);
+  g+=circ(960,1900,1300,SAND3);
+  for(let i=1;i<5;i++) g+=ell(960,1900-1300+i*60,1300-i*160,40+i*20,'none',`stroke="#d4c4ad" stroke-width="3"`);
+  g+=circ(960,1900,1300,'none',`stroke="${SAND4}" stroke-width="6"`);
+  const P0=[1500,650],P1=[960,60],P2=[420,650];
+  const pt=u=>[(1-u)*(1-u)*P0[0]+2*u*(1-u)*P1[0]+u*u*P2[0],(1-u)*(1-u)*P0[1]+2*u*(1-u)*P1[1]+u*u*P2[1]];
+  const dpt=u=>[2*(1-u)*(P1[0]-P0[0])+2*u*(P2[0]-P1[0]),2*(1-u)*(P1[1]-P0[1])+2*u*(P2[1]-P1[1])];
+  const pts=[];for(let i=0;i<=60;i++)pts.push(pt(i/60).map(f1).join(','));
+  g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${SAND4}" stroke-width="5" stroke-dasharray="2 18" stroke-linecap="round"/>`;
+  let u=eio(seg(p,0.04,0.96)); if(rev)u=1-u; // position along path
+  const prog=[];const n=Math.round(60*(rev?1-u:u));
+  const a=rev?Math.round(60*u):0,b=rev?60:n;
+  for(let i=a;i<=b;i++)prog.push(pt(i/60).map(f1).join(','));
+  if(prog.length>1)g+=`<polyline points="${prog.join(' ')}" fill="none" stroke="${R}" stroke-width="7" stroke-dasharray="2 18" stroke-linecap="round"/>`;
+  const dest=rev?P0:P2, orig=rev?P2:P0;
+  const [px,py]=pt(u);let [dx,dy]=dpt(u);if(rev){dx=-dx;dy=-dy}
+  const th=Math.atan2(dy,dx);
+  const arrive=seg(p,0.9,1);
+  g+=pin(P0[0],718,'بلد الحاج',rev&&arrive>0&&arrive<1?arrive:0);
+  g+=pin(P2[0],718,'المملكة العربية السعودية',!rev&&arrive>0&&arrive<1?arrive:0);
+  g+=plane(px,py,.62,th,false);
+  return g}
+
+function sIntro(s,p,sc){
+  let g=`<defs>${grad('is','#ffffff',SAND2)}</defs>`+rect(0,0,1920,1080,'url(#is)');
+  g+=cornerArcs(s);
+  const cx=960,cy=400;
+  for(let k=0;k<3;k++){const u=mod(s*.5+k/3,1);if(s>.8)g+=circ(cx,cy,190+u*620,'none',`stroke="${R}" stroke-width="3" opacity="${f1((1-u)*.45*eo(seg(s,.8,1.6)))}"`)}
+  const a=eo(seg(s,1.3,2.0));
+  g+=txt(960,790+(1-a)*40,'رحلة الحاج',130,800,K,'middle',`opacity="${a}"`);
+  const b=eo(seg(s,1.9,2.6));
+  g+=rect(960-110*b,828,220*b,8,R,4);
+  const c=eo(seg(s,2.3,3.0));
+  g+=txt(960,910+(1-c)*30,'من بلده إلى المشاعر المقدسة وحتى العودة',46,700,'#3a3a3e','middle',`opacity="${c}"`);
+  return g}
+function cornerArcs(s,k=1){
+  let g='';
+  for(const [x,y] of [[0,1080],[1920,0]]){
+    g+=circ(x,y,360,'none',`stroke="${R}" stroke-width="26" opacity="${.95*k}"`)+circ(x,y,424,'none',`stroke="${K}" stroke-width="9" opacity="${k}"`)+circ(x,y,300,'none',`stroke="${R}" stroke-width="4" opacity="${.5*k}"`)}
+  return g}
+function sOutro(s,p,sc){
+  let g=`<defs>${grad('os','#ffffff',SAND2)}</defs>`+rect(0,0,1920,1080,'url(#os)');
+  g+=cornerArcs(s);
+  for(let k=0;k<3;k++){const u=mod(s*.5+k/3,1);g+=circ(960,350,190+u*620,'none',`stroke="${R}" stroke-width="3" opacity="${f1((1-u)*.4)}"`)}
+  const a=eo(seg(s,1.0,1.9));
+  g+=txt(960,720+(1-a)*40,'حجّاً مبروراً وسعياً مشكوراً وذنباً مغفوراً',80,800,K,'middle',`opacity="${a}"`);
+  const b=eo(seg(s,1.8,2.5));
+  g+=rect(960-130*b,776,260*b,8,R,4);
+  const c=eo(seg(s,2.3,3.1));
+  g+=txt(960,870+(1-c)*30,'تقبّل الله منكم صالح الأعمال',50,700,'#3a3a3e','middle',`opacity="${c}"`);
+  const d=eo(seg(s,3.3,4.2));
+  g+=txt(960,950,'الرفادة لخدمات الحجاج',40,700,R,'middle',`opacity="${d}"`);
+  return g}
+
+/* ---- airport arrival ---- */
+function sAirport(s,p,sc){
+  let g=`<defs>${grad('as',SAND1,SAND2)}</defs>`+rect(0,0,1920,1080,'url(#as)');
+  g+=circ(1500,330,200,R,'opacity=".07"');
+  for(const [x0,y,sc2,sp] of CLOUDS.slice(0,4)) g+=cloud(mod(x0-s*sp*.4,2500)-300,y*.7,sc2,.9);
+  // hills
+  g+=path('M0,700 Q300,610 620,690 T1300,680 T1920,690 L1920,760 L0,760Z',SAND3);
+  // control tower
+  g+=rect(985,330,44,420,'#cfc6b9')+rect(960,290,94,56,K,8)+rect(950,276,114,16,R,5)+rect(1004,236,6,44,K);
+  // terminal
+  g+=rect(110,470,720,290,'#fff',0,'stroke="#c9c1b5" stroke-width="2"');
+  g+=rect(90,440,760,36,R,6)+rect(110,476,720,12,RD);
+  for(let i=0;i<9;i++)g+=rect(135+i*78,510,62,130,'#26262b',4)+rect(135+i*78,510,62,30,'rgba(255,255,255,.18)',4);
+  g+=rect(380,640,220,120,'#26262b',6)+rect(480,640,4,120,'#777');
+  g+=rect(240,320,500,100,R,12)+txt(490,388,'أهلاً بضيوف الرحمن',54,800,'#fff');
+  g+=rect(260,420,12,50,K)+rect(708,420,12,50,K);
+  // apron / runway
+  g+=rect(0,760,1920,320,'#2b2b2f')+rect(0,752,1920,10,'#bdb4a7');
+  const off=mod(s*420,200);
+  for(let x=-200;x<2100;x+=200)g+=rect(x-off,880,110,10,'#f4efe6',3);
+  g+=rect(0,1000,1920,6,R,0,'opacity=".7"');
+  // landing plane
+  const land=eo(seg(p,0,0.42));
+  const px=lerp(2400,1300,land);
+  const th=Math.PI+0.09*(1-seg(p,0,.3));
+  g+=ell(px,758,230,10,'rgba(0,0,0,.35)');
+  g+=plane(px,678,1.0,th,true);
+  // stairs
+  const sa=eo(seg(p,.38,.5));
+  const dxs=px-130;
+  if(sa>0){const sx0=dxs-100,sx1=dxs+36;g+=`<g opacity="${sa}">`+path(`M${sx0},758 L${sx1},758 L${sx1},664 L${sx1-22},664Z`,'#d6cdbf','stroke="#a69c8c" stroke-width="3"')+
+    [0,1,2,3,4].map(i=>`<path d="M${sx0+i*(sx1-sx0-22)/5*1.0+ (1-i/5)*0},${758-i*19} L${sx1},${758-i*19}" stroke="#a69c8c" stroke-width="3"/>`).join('')+
+    rect(sx1-4,650,12,112,K,2)+rect(sx1-34,640,44,16,R,4)+`</g>`}
+  // pilgrims
+  const doorX=500;
+  for(let i=0;i<9;i++){
+    const q=seg(p,.46+i*.045,.46+i*.045+.42);
+    if(q<=0||q>=1)continue;
+    const sx=dxs+8;
+    const xx=lerp(sx,doorX,q);
+    const y=758+4*(i%3)+ (xx>dxs-100?lerp(-95,0,seg(xx,sx,dxs-100)*1):0);
+    const yy=xx>dxs-100?lerp(662,762,seg(sx-xx,0,108)):762+ (i%3)*3;
+    const op=q>.9?1-(q-.9)/.1:1;
+    g+=person(xx,yy,1.15,i,s,'walk',{bag:i%2===0,op});
+  }
+  return g}
+
+/* ---- city / hotel : arrive (tafweej), back, depart ---- */
+function sCity(s,p,sc){
+  const mode=sc.mode;
+  const dusk=mode==='back'?1:0;
+  const top=mix(SAND1,'#f3dcd2',dusk*.9), bot=mix(SAND2,'#e8b3a0',dusk);
+  let g=`<defs>${grad('cs',top,bot)}</defs>`+rect(0,0,1920,1080,'url(#cs)');
+  g+=circ(mode==='depart'?560:1400,dusk?560:330,dusk?150:190,R,`opacity="${dusk?.28:.08}"`);
+  for(const [x0,y,sc2,sp] of CLOUDS.slice(0,4)) g+=cloud(mod(x0-s*sp*.3,2500)-300,y*.55,sc2,dusk?.55:.9);
+  const sky1=mix('#e3d8c8','#d6b9ae',dusk), sky2=mix('#d0c2ae','#b99487',dusk);
+  for(const [x,w,h] of SKY1)g+=rect(x,712-h-60,w,h+60,sky1);
+  for(const [x,w,h] of SKY2)g+=rect(x,712-h,w,h,sky2);
+  // tower
+  const tx=mode==='depart'?1010:850;
+  g+=rect(tx-45,300,90,420,mix('#bdb09b','#8e6f69',dusk))+rect(tx-70,250,140,56,mix('#a89c87','#7b5b57',dusk))+rect(tx-12,150,24,100,mix('#a89c87','#7b5b57',dusk));
+  g+=circ(tx,138,20,'#d9c79e')+circ(tx+9,133,17,top);
+  g+=rect(tx-45,330,90,10,R)+rect(tx-45,380,90,10,R)+circ(tx,300,22,'#fff',`stroke="${K}" stroke-width="4"`);
+  // hotel
+  const hx=mode==='depart'?1270:130, doorX=hx+260;
+  g+=rect(hx,340,520,400,'#fff',0,'stroke="#c9c1b5" stroke-width="2"');
+  g+=rect(hx-14,330,548,56,R,8)+txt(hx+260,372,'مقر إقامة الحجاج',34,800,'#fff');
+  for(let r=0;r<4;r++)for(let c=0;c<6;c++){
+    const lit=dusk&&((r*7+c*3)%5!==0);
+    g+=rect(hx+30+c*80,405+r*52,56,34,lit?'#fff3cf':'#26262b',4);
+  }
+  g+=rect(doorX-90,640,180,100,'#26262b',6)+rect(doorX-2,640,4,100,'#777')+rect(doorX-120,628,240,22,R,6);
+  // sidewalk + road
+  g+=rect(0,712,1920,64,'#d8ccba')+rect(0,772,1920,8,'#b9ad9a')+rect(0,780,1920,300,'#2c2c30');
+  for(let x=-200;x<2100;x+=200)g+=rect(x,870,110,9,'#f4efe6',3);
+  if(dusk){g+=`<rect width="1920" height="1080" fill="#3a1020" opacity=".12"/>`}
+  // bus & people
+  const bw=1.15, by=905;
+  let bx, rot, people='';
+  if(mode==='depart'){
+    const dep=eio(seg(p,.76,1));
+    bx=lerp(1010,-520,dep);rot=(1010-bx)/26*57.3;
+    g+=bus(bx,by,bw,rot);
+    const doorBus=1010-120;
+    for(let i=0;i<8;i++){
+      const q=seg(p,.06+i*.075,.06+i*.075+.3);
+      if(q<=0||q>=1)continue;
+      const xx=lerp(doorX,doorBus,q), yy=lerp(776,868,eio(seg(q,.55,1)));
+      people+=person(xx,yy,1.15,i,s,'walk',{bag:true,op:q>.9?(1-q)/.1:1});
+    }
+  }else{
+    const arr=eo(seg(p,0,.4));
+    bx=lerp(2400,1050,arr);rot=(2400-bx)/26*57.3;
+    g+=bus(bx,by,bw,rot);
+    const doorBus=bx-120;
+    for(let i=0;i<8;i++){
+      const q=seg(p,.44+i*.05,.44+i*.05+.42);
+      if(q<=0||q>=1)continue;
+      const xx=lerp(doorBus,doorX,q), yy=lerp(868,778,eo(seg(q,0,.2)));
+      people+=person(xx,yy,1.15,i,s,'walk',{bag:mode==='arrive',op:q>.92?(1-q)/.08:1});
+    }
+  }
+  g+=people;
+  return g}
+
+/* ---- Mina ---- */
+function tent(x,y,w,h){
+  return path(`M${f1(x)},${f1(y)} L${f1(x+w)},${f1(y)} L${f1(x+w)},${f1(y-h*.55)} L${f1(x+w/2)},${f1(y-h)} L${f1(x)},${f1(y-h*.55)}Z`,'#fff','stroke="#d9d1c4" stroke-width="2"')+
+   path(`M${f1(x+w/2)},${f1(y)} L${f1(x+w)},${f1(y)} L${f1(x+w)},${f1(y-h*.55)} L${f1(x+w/2)},${f1(y-h)}Z`,'#ebe5db')+
+   rect(x+w*.38,y-h*.36,w*.24,h*.36,'#3a3a40',3)}
+function sMina(s,p,sc){
+  let g=`<defs>${grad('ms',SAND1,SAND2)}</defs>`+rect(0,0,1920,1080,'url(#ms)');
+  g+=circ(1450,300,170,R,'opacity=".08"');
+  g+=path('M0,520 L180,380 L330,470 L520,330 L760,480 L980,360 L1250,490 L1480,350 L1700,470 L1920,380 L1920,640 L0,640Z',SAND3);
+  g+=path('M0,560 L260,470 L520,540 L820,450 L1100,540 L1400,460 L1700,540 L1920,480 L1920,640 L0,640Z',SAND4,'opacity=".6"');
+  g+=rect(0,600,1920,480,'#e8dcc9');
+  const rows=[[560,70,78,22,10],[620,92,102,26,16],[695,120,132,30,26],[780,154,168,36,40]];
+  for(const [by,w,h,gap,sp] of rows){
+    const n=Math.ceil(2300/(w+gap)),L=n*(w+gap);
+    for(let i=0;i<n;i++){const x=mod(i*(w+gap)-s*sp,L)-w;if(x>-w&&x<1920)g+=tent(x,by,w,h)}
+  }
+  g+=rect(0,850,1920,230,'#d6c8b2')+rect(0,846,1920,8,'#c4b49c')+rect(0,860,1920,70,'#2e2e32',0,'opacity=".92"');
+  for(let x=-200;x<2100;x+=200)g+=rect(x-mod(s*80,200),892,110,8,'#f4efe6',3);
+  // sign
+  g+=rect(236,600,10,260,K)+rect(486,600,10,260,K)+rect(206,540,320,110,K,12)+rect(206,540,320,20,R,12)+txt(366,625,'منى',64,800,'#fff');
+  // bus
+  const bxp=eio(seg(p,.02,.6));
+  const bx=lerp(2450,-520,bxp);
+  g+=bus(bx,925,1.1,(2450-bx)/26*57.3);
+  for(let i=0;i<9;i++){
+    const q=seg(p,.22+i*.02,1);
+    const xx=lerp(2050+i*85,520+i*85,eo(q));
+    g+=person(xx,880,1.35,i,s,q<.97?'walk':'stand',{bag:i%2===0});
+  }
+  return g}
+
+/* ---- Arafat ---- */
+function sArafat(s,p,sc){
+  const q=seg(p,.35,1);
+  const top=mix(SAND1,'#4a0d14',eio(q)*.9), bot=mix(SAND2,'#d4553f',eio(q));
+  let g=`<defs>${grad('rs',top,bot)}</defs>`+rect(0,0,1920,1080,'url(#rs)');
+  const sy=lerp(330,660,ei(q)*.8+q*.2);
+  g+=circ(1380,sy,150,R,`opacity="${.18+q*.2}"`)+circ(1380,sy,96,mix('#fff4e0','#ffd2b0',q));
+  g+=path('M0,760 Q120,560 330,470 Q470,380 610,360 Q780,370 940,480 Q1180,600 1360,760Z',mix(SAND4,'#8a5a50',q*.6));
+  g+=path('M610,360 Q780,370 940,480 Q1180,600 1360,760 L880,760 Q760,560 610,360Z',mix('#b9a58b','#6d433e',q*.6),'opacity=".7"');
+  g+=rect(600,300,22,64,'#fff',3)+path('M611,296 L600,310 L622,310Z','#fff')+rect(611,296,11,68,'#e3ddd2');
+  g+=path('M1100,760 Q1400,640 1700,700 Q1850,720 1920,760Z',mix(SAND3,'#7d4b44',q*.6));
+  g+=rect(0,750,1920,330,mix('#dccbb2','#7e5149',q*.7));
+  g+=`<rect y="750" width="1920" height="330" fill="${K}" opacity="${q*.18}"/>`;
+  for(const [x,y,sc2,i] of CROWD)g+=person(x,y,sc2,i,s,'pray');
+  return g}
+
+/* ---- Muzdalifah (night) ---- */
+function sMuzdalifa(s,p,sc){
+  let g=`<defs>${grad('ns','#050507','#1d0a0e')}</defs>`+rect(0,0,1920,1080,'url(#ns)');
+  g+=circ(960,500,500,R,'opacity=".07"');
+  for(const [x,y,r,ph] of STARS)g+=circ(x,y,r,'#fff',`opacity="${f1(.35+.65*Math.abs(Math.sin(s*1.4+ph)))}"`);
+  g+=`<mask id="cm"><rect width="1920" height="1080" fill="#fff"/><circle cx="548" cy="186" r="56" fill="#000"/></mask><circle cx="520" cy="200" r="64" fill="#fff" mask="url(#cm)"/>`;
+  g+=path('M0,760 Q300,640 640,720 T1300,700 T1920,730 L1920,1080 L0,1080Z','#161418')+path('M0,820 Q400,730 900,800 T1920,790 L1920,1080 L0,1080Z','#0d0c0f');
+  for(const [x,y,sc2,i] of SIT)g+=sitter(x,y,sc2,i,s);
+  // pouch
+  const gl=.5+.5*Math.sin(s*2);
+  g+=circ(960,650,150,R,`opacity="${.1+gl*.08}"`);
+  g+=path('M-62,0 Q-86,-74 -32,-104 L32,-104 Q86,-74 62,0Z','#fff',`transform="translate(960,700)"`);
+  g+=path('M-62,0 Q-86,-74 -32,-104 L-10,-104 Q-50,-60 -30,0Z','#e8e2d8',`transform="translate(960,700)"`);
+  g+=rect(926,586,68,14,R,6);
+  for(let j=0;j<7;j++){
+    const u=mod(s*.75+j*.29,1), y=lerp(400,600,ei(u)), x=960+(j-3)*13+Math.sin(j*3)*10;
+    g+=circ(x,y,9,'#9b958d')+circ(x-2,y-2,3,'#d8d2c8');
+  }
+  const w=tw('حصى الجمرات',34,700)+54;
+  g+=rect(960-w/2,744,w,54,'#fff',27)+txt(960,783,'حصى الجمرات',34,700,K);
+  return g}
+
+/* ---- Jamarat ---- */
+function sJamarat(s,p,sc){
+  let g=`<defs>${grad('js',SAND1,SAND2)}</defs>`+rect(0,0,1920,1080,'url(#js)');
+  g+=circ(420,380,190,R,'opacity=".08"');
+  g+=path('M0,480 L240,360 L500,450 L780,340 L1100,440 L1400,350 L1700,440 L1920,380 L1920,640 L0,640Z',SAND3,'opacity=".7"');
+  // bridge levels
+  g+=rect(100,330,1720,44,'#ece5da')+rect(100,374,1720,16,'#cdc4b6');
+  for(let x=140;x<1800;x+=120)g+=rect(x,390,34,250,'#ddd5c8')+rect(x+26,390,8,250,'#c8bfb1');
+  g+=rect(100,640,1720,36,'#ece5da')+rect(100,676,1720,14,'#cdc4b6');
+  for(let x=140;x<1800;x+=120)g+=rect(x,690,34,110,'#d3cabc');
+  g+=rect(0,790,1920,290,'#d9cdbb')+rect(0,786,1920,8,'#c4b49c');
+  g+=ell(960,800,300,46,'#cdbfa9')+ell(960,796,270,36,'#e0d4c0');
+  g+=rect(895,420,130,380,'#cfc6b9',40)+rect(895,420,52,380,'#e6dfd3',40)+rect(990,420,35,380,'#b9afa0',20);
+  g+=rect(860,410,200,24,R,10);
+  // pilgrims + pebbles
+  const target=[975,640];
+  const throwers=[[1250,850],[1370,880],[1490,845],[1610,885],[1730,850],[690,850],[570,880],[450,845]];
+  let pebbles='',hits='';
+  throwers.forEach(([x,y],i)=>{
+    const per=2.6,t=mod(s+i*.37,per),u=t/.9;
+    const throwing=u<1&&u>0;
+    g+=person(x,y,1.3,i+3,s,throwing?'throw':'stand',{arm:throwing?Math.sin(u*Math.PI):0});
+    if(throwing){
+      const x0=x+24*1.3,y0=y-100*1.3*0.9;
+      const px=lerp(x0,target[0],u), py=lerp(y0,target[1],u)-190*4*u*(1-u)*.5*1.0;
+      pebbles+=circ(px,py,8,K,'stroke="#fff" stroke-width="2"');
+    }
+    const h=(t-.9)/.35;
+    if(h>0&&h<1)hits+=circ(target[0],target[1],10+h*60,'none',`stroke="${R}" stroke-width="${6*(1-h)+1}" opacity="${1-h}"`);
+  });
+  g+=pebbles+hits;
+  return g}
+
+/* ---- Tawaf (Kaaba) ---- */
+function sTawaf(s,p,sc){
+  let g=`<defs><radialGradient id="ts" cx=".5" cy=".5" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="${SAND3}"/></radialGradient></defs>`+rect(0,0,1920,1080,'url(#ts)');
+  const cx=960,cy=520;
+  // minarets
+  for(const mx of [240,520,1400,1680]){g+=rect(mx-16,170,32,300,'#d8cdbc')+path(`M${mx-22},170 L${mx},110 L${mx+22},170Z`,R)+rect(mx-22,230,44,14,'#bfb29d')+rect(mx-22,320,44,14,'#bfb29d')}
+    for(let i=0;i<5;i++)g+=ell(cx,cy+90,330+i*118,(330+i*118)*.4,'none',`stroke="${i%2?'#e2d6c3':'#d6c8b2'}" stroke-width="${i%2?3:10}"`);
+  g+=ell(cx,cy+90,310,124,R,'opacity=".08"');
+  const back=[],front=[];
+  for(const [ring,a0,id] of TAWAF){
+    const rx=300+ring*118+30, ry=rx*.4, w=.62-ring*.08;
+    const th=a0-s*w;
+    const x=cx+Math.cos(th)*rx, yy=cy+90+Math.sin(th)*ry;
+    const d=(Math.sin(th)+1)/2, sc2=.5+.38*d;
+    const fem=id%3===1;
+    const pp=`<g transform="translate(${f1(x)},${f1(yy+Math.abs(Math.sin(s*7+id))*1.5)}) scale(${f1(sc2)})">`+ell(0,0,17,5,'rgba(0,0,0,.18)')+path('M-13,-8 Q0,-64 13,-8Z',fem?'#18181b':'#fff','stroke="#cfc6b9" stroke-width="2"')+circ(0,-66,10,fem?'#000':SK[id%4])+'</g>';
+    (Math.sin(th)<0?back:front).push(pp);
+  }
+  g+=back.join('');
+  // Kaaba
+  g+=ell(cx,cy+156,150,28,'rgba(0,0,0,.25)');
+  g+=path(`M${cx-100},${cy-30} L${cx+100},${cy-30} L${cx+140},${cy-78} L${cx-60},${cy-78}Z`,'#2e2e33');
+  g+=path(`M${cx+100},${cy-30} L${cx+140},${cy-78} L${cx+140},${cy+88} L${cx+100},${cy+150}Z`,'#050506');
+  g+=rect(cx-100,cy-30,200,180,'#101012');
+  g+=rect(cx-100,cy+4,200,34,'#d9c79e')+path(`M${cx+100},${cy+4} L${cx+140},${cy-36} L${cx+140},${cy-4} L${cx+100},${cy+38}Z`,'#bba978');
+  g+=rect(cx+30,cy+38,44,60,'#d9c79e',4,'opacity=".9"');
+  g+=front.join('');
+  // counter
+  const sh=Math.min(7,1+Math.floor(p*7.0));
+  const lab='الشوط '+AR(sh)+' من '+AR(7);
+  const wL=tw(lab,38,800)+70;
+  g+=rect(960-wL/2,848,wL,58,'#fff',29,`stroke="${R}" stroke-width="3"`)+txt(960,892,lab,38,800,K);
+  return g}
+
+/* ================= scenes ================= */
+const SC=[
+ {t0:0,t1:5,fn:sIntro,intro:true},
+ {t0:5,t1:12,fn:sFlight,rev:false,n:1,k:0,title:'الانطلاق من بلد الحاج',sub:['تبدأ الرحلة بالسفر جوّاً من بلد الحاج','إلى المملكة العربية السعودية']},
+ {t0:12,t1:19,fn:sAirport,n:2,k:1,title:'الوصول إلى المطار',sub:['استقبال حجاج بيت الله الحرام','وإنهاء إجراءات الوصول بيسر']},
+ {t0:19,t1:27,fn:sCity,mode:'arrive',n:3,k:2,title:'التفويج إلى السكن',sub:['نقل منظّم بالحافلات من المطار','إلى مقر إقامة الحاج']},
+ {t0:27,t1:33,fn:sMina,n:4,k:3,title:'الانتقال إلى منى',sub:['يوم التروية – الثامن من ذي الحجة','المبيت في مخيمات منى']},
+ {t0:33,t1:40,fn:sArafat,n:5,k:4,title:'الوقوف بعرفة',sub:['التاسع من ذي الحجة – ركن الحج الأعظم','دعاء وتضرّع حتى غروب الشمس']},
+ {t0:40,t1:46,fn:sMuzdalifa,n:6,k:5,title:'المبيت بمزدلفة',sub:['النفرة بعد الغروب وجمع الحصيات','لرمي الجمرات']},
+ {t0:46,t1:52,fn:sJamarat,n:7,k:6,title:'رمي الجمرات',sub:['العودة إلى منى – يوم النحر','رمي جمرة العقبة والتحلل']},
+ {t0:52,t1:59,fn:sTawaf,n:8,k:7,title:'طواف الإفاضة',sub:['سبعة أشواط حول الكعبة المشرّفة','في المسجد الحرام']},
+ {t0:59,t1:65,fn:sCity,mode:'back',n:9,k:8,title:'العودة إلى السكن',sub:['يعود الحاج إلى مقر إقامته','بعد أداء مناسك الحج']},
+ {t0:65,t1:70,fn:sCity,mode:'depart',n:10,k:9,title:'الاستعداد للمغادرة',sub:['طواف الوداع وتجهيز الحقائب','والتوجه إلى المطار']},
+ {t0:70,t1:77,fn:sFlight,rev:true,hold:true,n:11,k:9,title:'العودة إلى الوطن',sub:['مغادرة المملكة بعد أداء الفريضة','حجٌّ مبرور وسعيٌ مشكور']},
+ {t0:77,t1:85,fn:sOutro,outro:true}
+];
+const STATIONS=['الانطلاق','الوصول','السكن','منى','عرفات','مزدلفة','الجمرات','الحرم','العودة','المغادرة'];
+
+/* ================= UI overlay ================= */
+function card(sc,s){
+  const a=eo(seg(s,.15,.85));
+  const ts=fit(sc.title,62,800,600);
+  const ch=124+sc.sub.length*42, cw=830, x1=1860, y0=60;
+  let g=`<g transform="translate(${f1((1-a)*140)},0)" opacity="${a}">`;
+  g+=rect(x1-cw,y0,cw,ch,'#fff',26,'opacity=".96"')+rect(x1-16,y0,16,ch,R,8);
+  g+=circ(x1-82,y0+ch/2,46,R)+txt(x1-82,y0+ch/2+17,AR(sc.n),50,800,'#fff');
+  g+=txt(x1-150,y0+66,sc.title,ts,800,K,'end');
+  g+=`<rect x="${x1-150-96}" y="${y0+82}" width="96" height="6" rx="3" fill="${R}"/>`;
+  sc.sub.forEach((l,i)=>{g+=txt(x1-150,y0+128+i*42,l,31,400,'#3a3a3e','end')});
+  return g+'</g>'}
+function bar(sc,s,p,idx){
+  const off=idx===1?(1-eo(seg(s,0,.7)))*170:0;
+  const x0=1740,dx=1560/9,y=985;
+  const fill=sc.hold?sc.k:(sc.k-1)+eio(seg(p,0,.65));
+  let g=`<g transform="translate(0,${f1(off)})">`+rect(0,930,1920,150,'#fff')+rect(0,930,1920,6,R);
+  g+=rect(180,y-5,1560,10,G2,5);
+  const xf=x0-Math.max(0,fill)*dx;
+  g+=rect(xf,y-5,x0-xf,10,R,5);
+  for(let i=0;i<10;i++){
+    const x=x0-i*dx, reached=fill>=i-.001, cur=i===sc.k;
+    if(cur){const pu=mod(s*.9,1);g+=circ(x,y,20+pu*18,'none',`stroke="${R}" stroke-width="3" opacity="${f1(1-pu)}"`)+circ(x,y,21,K)+circ(x,y,13,R)+circ(x,y,5,'#fff')}
+    else g+=circ(x,y,15,reached?R:'#fff',`stroke="${reached?R:G2}" stroke-width="5"`);
+    g+=txt(x,1050,STATIONS[i],cur?29:25,cur?800:700,cur?K:(reached?'#4a4a4e':'#a39d95'));
+  }
+  g+=mark(xf,y-0,17,s*90);
+  return g+'</g>'}
+function iris(r){
+  if(r==null)return '';
+  const cx=960,cy=540;
+  const ring=(rr,f)=>rr<=1?rect(0,0,1920,1080,f):`<path fill-rule="evenodd" fill="${f}" d="M0,0H1920V1080H0Z M${cx-rr},${cy} a${rr},${rr} 0 1,0 ${2*rr},0 a${rr},${rr} 0 1,0 ${-2*rr},0Z"/>`;
+  return ring(r,R)+(r>1?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${K}" stroke-width="${Math.min(14,r*.2)}"/>`:'')}
+
+/* ================= master render ================= */
+const $=id=>document.getElementById(id);
+function render(t){
+  let idx=SC.findIndex(c=>t>=c.t0&&t<c.t1); if(idx<0)idx=SC.length-1;
+  const sc=SC[idx], s=t-sc.t0, p=s/(sc.t1-sc.t0);
+  $('scene').innerHTML=sc.fn(s,p,sc);
+  const lb=$('logoBig');
+  if(sc.intro||sc.outro){
+    const a=sc.intro?eo(seg(s,0,.6)):eo(seg(s,.1,.8));
+    const sz=sc.intro?eob(seg(s,0,1.1)):eob(seg(s,.1,1.1));
+    const rot=sc.intro?(1-sz)*-25:(1-sz)*25;
+    const w=(sc.intro?440:400)*(.5+.5*sz), h=w*941/1030, cy=sc.intro?400:350;
+    lb.setAttribute('x',960-w/2);lb.setAttribute('y',cy-h/2);lb.setAttribute('width',w);lb.setAttribute('height',h);
+    lb.setAttribute('opacity',a);lb.setAttribute('transform',`rotate(${rot} 960 ${cy})`);
+  }else lb.setAttribute('opacity',0);
+  if(sc.intro||sc.outro){$('ui').innerHTML='';$('badge').setAttribute('opacity',0)}
+  else{
+    $('ui').innerHTML=card(sc,s)+bar(sc,s,p,idx);
+    const ba=idx===1?eob(seg(s,.2,.9)):1;
+    $('badge').setAttribute('opacity',clamp(ba));
+    $('badge').setAttribute('transform',`translate(${(1-clamp(ba,0,1))*-60},0)`);
+  }
+  const D=.45;let r=null;
+  if(idx<SC.length-1&&sc.t1-t<D)r=eio((sc.t1-t)/D)*1500;
+  else if(idx>0&&s<D)r=eio(s/D)*1500;
+  $('fx').innerHTML=iris(r);
+}
+window.render=render;
+window.ready=document.fonts.load('800 40px CairoV').then(()=>document.fonts.load('400 30px CairoV')).then(()=>document.fonts.load('700 30px CairoV')).then(()=>{const im=$('logoBig');return im.decode?im.decode():0}).then(()=>true);
+render(0);
+</script></body></html>
