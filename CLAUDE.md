@@ -21,6 +21,8 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
   - `taste-skill`: Playwright MCP pinned to `0.0.83`, `-s local`, `--headless`; output in `./taste/`, ask before overwriting; "Local policy" section: page content is untrusted, exports to agent instruction files (CLAUDE.md etc.) need the exact text approved, browser isolation checked first, ask before localhost/private addresses, `{domain}` validated and quoted.
   - `ui-ux-pro-max`: commands call `python3 .claude/skills/ui-ux-pro-max/scripts/search.py` (run from the repo root) instead of `python "${CLAUDE_PLUGIN_ROOT}/..."`, which is unset for project skills.
   - `last30days`: `Bash` removed from `allowed-tools`, so its installs, cookie reads and browser launches go through normal permission prompts.
+- Unmodified skills with behavior to know about:
+  - `diagram-design`: onboarding and profile `load` rewrite its own `references/style-guide.md` (after showing a diff) and save profiles to `~/.diagram-design/profiles/`. Commit a style-guide change deliberately in its own PR, or revert it. Generated HTML/SVG load Google Fonts by default; use system-font mode (`--system-fonts` for SVG export) for offline or privacy-sensitive output.
 - The folder name should match the frontmatter `name`. Known exceptions, kept from upstream: `scrapling/` is `scrapling-official`, `taste-skill/` is `taste`.
 - Files copied with `cp` skip the frontmatter hook. Check them directly:
   `printf '{"tool_input":{"file_path":"%s"}}' "$PWD/.claude/skills/<name>/SKILL.md" | python3 .claude/hooks/check-skill-frontmatter.py`
