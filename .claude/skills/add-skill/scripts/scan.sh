@@ -14,7 +14,7 @@ echo "Total: $(find "$dir" -type f | wc -l) files, $(du -sh "$dir" | cut -f1)"
 scan() {
   local label="$1" pattern="$2"
   local hits
-  hits=$(grep -rnIE --exclude-dir=node_modules --exclude-dir=.git "$pattern" "$dir" 2>/dev/null | cut -c1-200 || true)
+  hits=$(grep -rnIE --exclude-dir=.git "$pattern" "$dir" 2>/dev/null | cut -c1-200 || true)
   echo
   echo "== $label ($(printf '%s' "$hits" | grep -c . || true)) =="
   [ -n "$hits" ] && printf '%s\n' "$hits" | sed -n '1,20p'

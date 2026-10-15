@@ -7,7 +7,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - `.claude/skills/<name>/` — one folder per skill. All but `add-skill` are third-party.
 - `.claude/agents/skill-security-reviewer.md` — read-only reviewer for incoming skills.
 - `.claude/hooks/session-start.sh` — installs Node 24 via nvm in cloud sessions.
-- `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`.
+- `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`; tests in `.claude/hooks/test_check_skill_frontmatter.py`.
 - `.claude/settings.json` — registers both hooks.
 
 ## Adding or updating a skill
@@ -40,7 +40,9 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 
 ## Tests
 
-The only bundled suite is `ui-ux-pro-max`:
+Hook tests: `python3 -m unittest discover -s .claude/hooks` (5 tests, all pass).
+
+The only bundled skill suite is `ui-ux-pro-max`:
 
 ```bash
 cd .claude/skills/ui-ux-pro-max && python3 -m unittest discover -s scripts/tests
