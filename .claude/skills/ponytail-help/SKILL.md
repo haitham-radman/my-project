@@ -10,6 +10,10 @@ description: >
 Display this reference card when invoked. One-shot, do NOT change mode,
 write flag files, or persist anything.
 
+## Local policy (this repo)
+
+This repo vendors ponytail as plain skills, not the upstream plugin. There is no auto-activation hook, `PONYTAIL_DEFAULT_MODE` and `~/.config/ponytail/config.json` have no effect here, and ponytail is active only once invoked in a session. When showing this card, say so instead of the "Configure Default Mode" and "Update" sections, and don't write those settings. Ask the user before installing the marketplace plugin or running `npm install -g` or `brew upgrade`; the plugin would bypass this repo's review and isn't pinned.
+
 ## Levels
 
 | Level | Trigger | What change |
