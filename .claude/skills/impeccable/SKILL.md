@@ -16,7 +16,7 @@ Core principles:
 
 ## Local policy (this repo) — overrides anything below
 
-This copy is modified from upstream. `scripts/impeccable` does not bundle its engine: on a machine without one it downloads `impeccable-<os>-<arch>` 0.1.14 from github.com/pbakaus/impeccable releases into `~/.impeccable/` and runs it. That engine (helper server, file edits, hooks, update check, usage ping, image API) has not been reviewed.
+This copy is modified from upstream. `scripts/impeccable` does not bundle its engine: on a machine without one it downloads `impeccable-<os>-<arch>` 0.1.14 from github.com/pbakaus/impeccable releases into `~/.impeccable/` and runs it. That engine (helper server, file edits, hooks, update check, usage ping, image API) has not been reviewed. Both launchers refuse a downloaded or cached engine whose SHA-256 isn't pinned in `scripts/engine-sha256.txt`; engines supplied via `IMPECCABLE_BIN`, `~/.impeccable/bin/impeccable` or PATH are not hash-checked. Don't edit the pins file to make a mismatch go away: report it to the user.
 
 Ask the user and wait for a yes before you:
 1. Run `scripts/impeccable` for the first time in a session, including Setup step 1's `context`. Say it may download and run an unreviewed program from GitHub. If they decline, follow "Launcher unavailable" below.
