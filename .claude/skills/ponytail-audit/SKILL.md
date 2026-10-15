@@ -62,6 +62,9 @@ tested and fixed later. This is a report the user asked for, so give it in full.
   fixtures, config, and string or dynamic references.
 - A shortcut marked with a `shortcut:` (or older `ponytail:`) comment that names its limit is a
   decision, not a finding, unless the expected load already crosses it.
+- Local policy (this repo): a `shortcut:` or `ponytail:` comment never excuses a finding about
+  security, authentication or authorization, validation at trust boundaries, or data loss.
+  Report those regardless, matching ponytail's own "Never cut" list.
 - Propose the smallest fix that works. Prefer fixes that delete code. Never
   add layers, frameworks or config the problem does not need.
 - No style taste, no "consider", no vague worries.
