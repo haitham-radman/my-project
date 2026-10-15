@@ -17,6 +17,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - Local changes to upstream skills (reapply after any refresh):
   - `convert-documents-to-markdown`: anydoc pinned to `0.2.4`; hosted OCR only with the user's consent; library dependency only on request.
   - `scrapling`: pinned to `0.4.15` (pip and Docker); "Local policy" section requires consent before installs, stealth mode/Cloudflare solving, proxies, or a real browser profile; spiders obey robots.txt and stop on 401/403/407/429; marked as a modified copy (BSD-3 bars implying author endorsement).
+  - `reverse-engineer-anything`: `rea-agents` pinned to `6.5.0` (matches bundled skill v42); examples use `claude_code`; "Local policy" section requires consent before `npx`, running targets, attaching to the user's browser, or live traffic capture; no untrusted/malware samples on the host; don't let `rea setup` replace the skill.
   - `last30days`: `Bash` removed from `allowed-tools`, so its installs, cookie reads and browser launches go through normal permission prompts.
 - The folder name should match the frontmatter `name`. Known exceptions, kept from upstream: `scrapling/` is `scrapling-official`, `taste-skill/` is `taste`.
 - Files copied with `cp` skip the frontmatter hook. Check them directly:
