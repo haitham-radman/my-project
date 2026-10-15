@@ -14,6 +14,13 @@ metadata:
 
 Rewrite AI-sounding text so it reads like the writer, not a chatbot. Keep what it says. Do not make anything up.
 
+## Local policy (this repo) — overrides anything below
+
+This copy is modified from upstream:
+1. **File mode asks first.** Before writing to a file, show the user a diff of the proposed changes and wait for a yes. Never overwrite a file without that approval.
+2. **Keep attribution and notices.** Never remove or reword `Co-Authored-By:` or `Claude-Session:` trailers, "Generated with …" lines, AI-assistance or disclosure notices, licence headers, or legal and safety notices. §22 and §25 do not apply to them, including in embedded mode for commits and pull requests.
+3. **No new facts beats the examples.** The before/after examples illustrate style only. Some of them add or change facts (e.g. §4, §12, §17, §18, §20, §25); don't copy that. The rule in "How to work" step 2 always wins.
+
 ## Why AI text sounds the way it does
 
 A language model writes whatever is most likely to come next, so by default it makes the choice that fits the widest range of readers and subjects. A human writer chooses for one reader and one subject, so their choices are uneven and specific. Every pattern below is one form of the default choice:
