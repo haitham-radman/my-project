@@ -14,6 +14,8 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 
 - Use `/add-skill <pasted SKILL.md | git URL | path>`. It copies the skill, validates it, runs `skill-security-reviewer`, smoke-tests, and opens a PR.
 - Keep third-party skills exactly as published so they can be refreshed from upstream. Ask before changing their content.
+- Local changes to upstream skills (reapply after any refresh):
+  - `convert-documents-to-markdown`: anydoc pinned to `0.2.4`; hosted OCR only with the user's consent; library dependency only on request.
 - The folder name should match the frontmatter `name`. Known exceptions, kept from upstream: `scrapling/` is `scrapling-official`, `taste-skill/` is `taste`.
 - Files copied with `cp` skip the frontmatter hook. Check them directly:
   `printf '{"tool_input":{"file_path":"%s"}}' "$PWD/.claude/skills/<name>/SKILL.md" | python3 .claude/hooks/check-skill-frontmatter.py`
