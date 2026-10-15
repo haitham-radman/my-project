@@ -1,5 +1,7 @@
 # Imagery kit — curated abstract assets, hosted, ready
 
+> **Disabled in this repo** (SKILL.md Local policy): don't reference `usehallmark.com` in output. Use hand-built SVG or a local placeholder instead.
+
 A small set of pre-generated abstract / decorative imagery that any Hallmark output can pull from when a brief allows non-photographic imagery. The kit lives at:
 
 ```
