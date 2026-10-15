@@ -11,10 +11,10 @@ NVM_COMMIT="a885b885fef16fac4bc544188fb25e9e37ae83e8"
 NODE_MAJOR="24"
 export NVM_DIR="$HOME/.nvm"
 
-if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-  git clone -q https://github.com/nvm-sh/nvm.git "$NVM_DIR"
-  git -C "$NVM_DIR" checkout -q "$NVM_COMMIT"
-fi
+# Clone without a checkout so only the pinned commit ever lands on disk: a
+# failed checkout leaves no nvm.sh, and the next session retries the pin.
+[ -d "$NVM_DIR/.git" ] || git clone -q --no-checkout https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+[ -s "$NVM_DIR/nvm.sh" ] || git -C "$NVM_DIR" checkout -q "$NVM_COMMIT"
 
 # nvm.sh references unset variables, so relax -u while it runs.
 set +u
