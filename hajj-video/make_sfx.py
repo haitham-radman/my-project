@@ -8,6 +8,7 @@ SR = 44100
 DUR = 92
 N = DUR * SR
 rng = np.random.default_rng(7)
+MURM = .5  # synthetic crowd murmur is turned down because real chants are mixed in
 L = np.zeros(N, np.float32)
 R = np.zeros(N, np.float32)
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -116,7 +117,7 @@ def murmur(d, nv=14, lvl=None):
         out += norm(v) * syl * (.4 + rng.random())
     out = fftfilt(out, 110, 4000)
     out = norm(out)
-    return out * (ramp(d, lvl) if lvl else 1)
+    return out * (ramp(d, lvl) if lvl else 1) * MURM
 
 
 def wind(d, lvl):
@@ -294,27 +295,26 @@ place(jet(4.5, [(0, .45), (1.5, .4), (4.5, .1)], whine=2100, wlvl=.25, rumble=.6
 place(chime(), 85.1, .7)
 place(bell(1046.5, 3.5) * .5, 86.4, .35)
 
-# ---------- optional real recordings in ./external ----------
-EXT = {  # file stem -> start times (s)
-    'talbiyah': [12.6, 27.4], 'takbeer': [33.4, 46.4, 59.6], 'dua': [34.5],
-}
-for stem, times in EXT.items():
-    for ext in ('wav', 'mp3', 'm4a', 'ogg'):
-        fp = os.path.join(HERE, 'external', f'{stem}.{ext}')
-        if os.path.exists(fp):
-            raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', fp, '-f', 'f32le', '-ac', '2', '-ar', str(SR), '-'], capture_output=True).stdout
-            a = np.frombuffer(raw, np.float32).reshape(-1, 2)
-            for t in times:
-                i = int(t * SR); n = min(len(a), N - i)
-                L[i:i + n] += a[:n, 0] * .8; R[i:i + n] += a[:n, 1] * .8
-            print('mixed external', fp, times)
-            break
+# ---------- real recordings (Talbiyah / Takbeer clips cut by cut_chants.py) ----------
+CLIPS = [  # file, start time (s), gain
+    ('talbiyah_airport', 12.8, .9), ('talbiyah_bus', 19.7, .5), ('talbiyah_mina', 27.5, .85),
+    ('talbiyah_arafat', 33.6, .95), ('talbiyah_muzdalifah', 40.7, .5),
+    ('takbeer_jamarat', 46.5, .9), ('takbeer_tashreeq', 59.8, .7), ('takbeer_return', 66.6, .5),
+]
+for name, t, g in CLIPS:
+    fp = os.path.join(HERE, 'external', 'clips', name + '.flac')
+    if not os.path.exists(fp):
+        print('missing clip', fp); continue
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', fp, '-f', 'f32le', '-ac', '2', '-ar', str(SR), '-'], capture_output=True).stdout
+    a = np.frombuffer(raw, np.float32).reshape(-1, 2)
+    i = int(t * SR); n = min(len(a), N - i)
+    L[i:i + n] += a[:n, 0] * g; R[i:i + n] += a[:n, 1] * g
 
 # ---------- write ----------
-peak = max(np.abs(L).max(), np.abs(R).max())
-k = .85 / peak
-st = (np.stack([L, R], 1) * k * 32767).astype('<i2')
+p999 = float(np.percentile(np.abs(np.concatenate([L, R])), 99.9))
+k = .6 / p999
+st = (np.tanh(np.stack([L, R], 1) * k) * .95 * 32767).astype('<i2')
 out = os.path.join(HERE, 'sfx-track.wav')
 with wave.open(out, 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(st.tobytes())
-print('wrote', out, 'peak before norm', round(float(peak), 2))
+print('wrote', out, 'p99.9', round(p999, 2))
