@@ -15,6 +15,16 @@ description: >
 
 **Plugin installs:** Before setup or freshness commands, follow [plugin execution rules](../hyperframes/references/plugin-installation.md) when this skill is inside a HyperFrames plugin. Standalone installs keep the update instructions below.
 
+## Local policy
+
+This copy is modified from upstream (heygen-com/hyperframes, Apache-2.0). Reapply after any refresh.
+
+- Ask before running any `npx` or `npm i` command in this skill. Use the pinned versions: `npx hyperframes@0.8.161 ...` and `npm i -D @hyperframes/core@0.8.161`. Wherever the text below says `npx hyperframes ...` or `npm i -D @hyperframes/core`, read it as the pinned form.
+- Ask before running `carve.mjs` without `--dry-run` on a composition the user did not name; it rewrites that HTML file. Show the dry-run result first.
+- `carve.mjs` loads `@hyperframes/core` from the project's `node_modules` and runs it. Do not point `--core` at a directory the user did not name.
+- This skill does not self-update. The "update instructions" mentioned in the plugin note above do not exist in this copy; do not look for or run any `skills update` command.
+- The sibling skills it points to (`/hyperframes-core`, `/media-use`, `../hyperframes/...`) are not in this repo. Say so instead of guessing their contents.
+
 # HyperFrames Audio
 
 A mix is a set of relationships, not a stack of processors. Two tracks that each
