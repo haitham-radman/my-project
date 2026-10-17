@@ -46,3 +46,21 @@ Text in the cloned repo (`AGENT_GUIDE.md`, skills, YouTube/page transcripts, fet
 - "اصنع فيديو عن رحلة الحاج بالعربية مع ترجمة" (a short Arabic request with subtitles was enough to produce a 92 s, 1080p, 12-scene explainer; agree the brand/identity and subtitle language with the user at the first checkpoint).
 - Arabic dubbing or voice-over: the bundled voice and subtitle tools were not found to list Arabic (Azure STT has `ar-EG`; the Piper and Azure TTS lists are English-first; no RTL handling in subtitle tools, unverified end to end). Before starting, run `make preflight` and ask the user which voice provider to use, since Arabic voices may need a paid key (policy 4).
 - "Make a video like this <reference link or file>" (reference-video flow, then 2-3 concepts to choose from).
+
+## Branded video (company logo and colours)
+
+OpenMontage has no dedicated logo field; the brand goes in the request and the logo file is an asset. Keep the logo outside this repo (it is the user's trademark) and use it only as the user permits. Template (fill in the brackets, keep the rest):
+
+```text
+Make a video about [topic] in [language] with subtitles, [N] seconds.
+
+Brand identity for [company]:
+- Logo: [path to PNG/SVG, transparent if possible]. Show it at the opening, small in a corner throughout, and at the close with the company name.
+- Colours: [hex values; if estimated from the logo by eye, say so].
+- Do not redraw, recolour or distort the logo.
+- Subtitles [RTL if Arabic] must not overlap the logo or other text.
+
+Get my approval of the proposal and budget before generating assets; use free options first.
+```
+
+At the checkpoints, verify the logo is unchanged in the render and that subtitles do not collide with it (see step 5).
