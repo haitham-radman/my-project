@@ -188,9 +188,12 @@
   }
 
   /* ---------------- sequential reader ---------------- */
+  // Decoders stall when too many output frames stay unclosed, so the reader keeps only the frame it will
+  // return plus the lookahead it needs, closing the rest as soon as they arrive, and feeds in small batches.
   class Reader {
     constructor(track) {
-      this.t = track; this.dec = null; this.buf = []; this.idx = 0; this.eof = false; this.err = null; this.cur = null; this.waiters = [];
+      this.t = track; this.dec = null; this.buf = []; this.idx = 0; this.eof = false; this.err = null;
+      this.curTs = null; this.target = null; this.waiters = []; this.started = false; this.warm = false;
       this.keys = []; track.samples.forEach((s, i) => { if (s.key) this.keys.push(i); });
     }
     config() {
@@ -204,7 +207,10 @@
       const sup = await VideoDecoder.isConfigSupported(this.config());
       if (!sup.supported) return false;
       this.dec = new VideoDecoder({
-        output: (f) => { this.buf.push(f); this.wake(); },
+        output: (f) => {
+          this.warm = true; // the decoder has caught up with its reordering delay
+          this.buf.push(f); this.prune(); this.wake();
+        },
         error: (e) => { this.err = e; this.wake(); },
       });
       this.dec.configure(this.config());
@@ -212,44 +218,57 @@
     }
     wake() { const w = this.waiters; this.waiters = []; w.forEach((r) => r()); }
     wait(ms) { return new Promise((r) => { const to = setTimeout(r, ms); this.waiters.push(() => { clearTimeout(to); r(); }); }); }
-    drop() { this.buf.forEach((f) => f.close()); this.buf = []; this.cur = null; }
+    bestFor(us) {
+      let best = null;
+      for (const f of this.buf) if (f.timestamp <= us && (!best || f.timestamp > best.timestamp)) best = f;
+      return best;
+    }
+    /** Close every buffered frame older than the best candidate for the current target. */
+    prune() {
+      if (this.target == null) return;
+      const best = this.bestFor(this.target); if (!best) return;
+      this.buf = this.buf.filter((f) => { if (f !== best && f.timestamp < best.timestamp) { f.close(); return false; } return true; });
+    }
+    drop() { this.buf.forEach((f) => f.close()); this.buf = []; this.curTs = null; }
     async seekTo(sec) {
       let k = this.keys[0] || 0;
       for (const i of this.keys) { if (this.t.samples[i].pts <= sec + 1e-6) k = i; else break; }
-      this.drop(); this.dec.reset(); this.dec.configure(this.config()); this.idx = k; this.eof = false;
+      this.drop(); this.dec.reset(); this.dec.configure(this.config()); this.idx = k; this.eof = false; this.warm = false;
     }
+    // Feed in small steps and let outputs arrive before feeding more (a few samples until the first frame
+    // appears, because decoders hold frames back for reordering; then one at a time), with decodeQueueSize as backpressure.
     async pump() {
       const s = this.t.samples;
-      if (this.idx >= s.length) {
-        await this.dec.flush(); this.eof = true; return;
-      }
-      for (let n = 0; n < 6 && this.idx < s.length; n++, this.idx++) {
+      if (this.idx >= s.length) { await this.dec.flush(); this.eof = true; return; }
+      const batch = this.warm ? 1 : 4;
+      for (let n = 0; n < batch && this.idx < s.length; n++, this.idx++) {
         const smp = s[this.idx];
         const data = await this.t.src.get(smp.off, smp.size);
         this.dec.decode(new EncodedVideoChunk({ type: smp.key ? 'key' : 'delta', timestamp: Math.round(smp.pts * 1e6), data }));
         if (this.dec.decodeQueueSize > 8) await this.wait(200);
       }
-      await this.wait(100);
+      await this.wait(this.warm ? 20 : 30);
     }
-    /** Latest frame whose timestamp is <= sec (sequential access; restarts from a keyframe if asked to go back). */
+    /** Latest frame whose timestamp is <= sec (sequential access; restarts from a keyframe if asked to go back).
+        The returned frame stays open until the next call that returns a different frame, or close(). */
     async frameAt(sec) {
       const us = sec * 1e6;
+      this.target = us;
       if (!this.started) { await this.seekTo(sec); this.started = true; }
-      else if (this.cur && us < this.cur.timestamp - 1) await this.seekTo(sec);
+      else if (this.curTs != null && us < this.curTs - 1) await this.seekTo(sec);
       for (;;) {
         if (this.err) throw this.err;
         if (this.eof || this.buf.some((f) => f.timestamp > us)) break;
         await this.pump();
       }
-      let best = null;
-      for (const f of this.buf) if (f.timestamp <= us && (!best || f.timestamp > best.timestamp)) best = f;
-      if (!best) best = this.cur || this.buf.reduce((a, f) => (!a || f.timestamp < a.timestamp ? f : a), null);
+      let best = this.bestFor(us);
+      if (!best) best = this.buf.reduce((a, f) => (!a || f.timestamp < a.timestamp ? f : a), null);
       if (!best) throw new Error('no frame decoded');
       this.buf = this.buf.filter((f) => { if (f !== best && f.timestamp < best.timestamp) { f.close(); return false; } return true; });
-      this.cur = best;
+      this.curTs = best.timestamp;
       return best;
     }
-    close() { try { this.drop(); if (this.dec && this.dec.state !== 'closed') this.dec.close(); } catch { /* ignore */ } }
+    close() { try { this.target = null; this.drop(); if (this.dec && this.dec.state !== 'closed') this.dec.close(); } catch { /* ignore */ } }
   }
 
   async function parse(blob) {

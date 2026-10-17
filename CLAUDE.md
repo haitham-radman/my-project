@@ -59,6 +59,8 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 
 Hook tests: `python3 -m unittest discover -s .claude/hooks` (5 tests, all pass).
 
+Studio decoder tests (Node's built-in runner, no dependencies): `node --test "studio/test/*.test.js"` (50 tests, all pass). `demux.test.js` and `reader.test.js` run in plain Node; `decode.test.js` drives headless Chromium through Playwright and skips itself when Playwright or a browser is missing (H.264 fixtures also skip where the browser cannot decode H.264). `studio/test/make-fixtures.js` regenerates `studio/test/fixtures/` and needs ffmpeg and ffprobe.
+
 The only bundled skill suite is `ui-ux-pro-max`:
 
 ```bash
