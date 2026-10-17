@@ -39,7 +39,7 @@ python3 .claude/skills/raw-to-reel/scripts/server.py "<folder>" --port 8765
 Uploads go to `<folder>/uploads/`, results to `<folder>/reel/<name>-<time>/final.mp4` with `final.edit.json` and the `step*.mp4` intermediates. Existing files are never overwritten. Start it only after the user agrees (consent rule 4), tell them the URL, stop it when done.
 
 - **Remove silence**, **sound effects** (synthetic whoosh at each cut; ffmpeg only): work out of the box.
-- **Bad takes**, **captions** need `faster-whisper` and a local model. Without it the job fails with a plain message; do not install it without consent. `--allow-download` lets it fetch the `small` model (consent rule 1). Bad-take detection is a heuristic (a sentence is dropped when the next one repeats its opening words or is very similar); say so and let the user review the result.
+- **Bad takes**, **captions** need `faster-whisper` and a local model. Without it the job fails with a plain message; do not install it without consent. `--model <folder>` uses a model folder already on disk (no download); `--allow-download` lets it fetch the `small` model (consent rule 1). Bad-take detection is a heuristic (a sentence is dropped when the next one repeats its opening words or is very similar); say so and let the user review the result.
 - Not in the page: b-roll placement (needs the user's clips; do it with the steps below).
 
 Tests: `cd .claude/skills/raw-to-reel/scripts && python3 -m unittest test_pipeline`.
