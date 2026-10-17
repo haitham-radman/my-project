@@ -215,7 +215,7 @@
     const kind = file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : file.type.startsWith('image') ? 'image' : null;
     if (!kind) throw new Error('unsupported');
     const url = URL.createObjectURL(file);
-    const m = { id, name: file.name, kind, url, duration: 0, w: 0, h: 0, thumb: null, peaks: null, el: null };
+    const m = { id, name: file.name, kind, url, file, duration: 0, w: 0, h: 0, thumb: null, peaks: null, el: null };
     if (kind === 'image') {
       const img = new Image(); img.src = url; await img.decode();
       Object.assign(m, { el: img, w: img.naturalWidth, h: img.naturalHeight, thumb: url, duration: 5 });
@@ -409,6 +409,7 @@
     const m = mediaOf(c); if (!m) return null;
     if (m.kind === 'image') return { src: m.el, w: m.w, h: m.h };
     if (m.kind !== 'video') return null;
+    if (S.fast && wcFrames.has(c.id)) { const f = wcFrames.get(c.id); return { src: f, w: f.displayWidth, h: f.displayHeight }; }
     const e = els.get(c.id);
     if (!e || e.el.readyState < 2 || !e.el.videoWidth) return null;
     return { src: e.el, w: e.el.videoWidth, h: e.el.videoHeight };
@@ -1250,16 +1251,72 @@
       v.addEventListener('seeked', fin); v.currentTime = target;
     });
   }
-  async function seekAll(t) {
+  let dsrc = new Map(), wcFrames = new Map(), demuxCache = new Map();
+  function seekClip(c, t) {
+    const m = mediaOf(c), e = elFor(c); e.el.muted = true;
+    return seekEl(e.el, clamp(c.in + (t - c.start) * c.speed, 0, Math.max(0, m.duration - 0.001)));
+  }
+  // One frame per active video clip: from its WebCodecs reader when there is one, else by seeking the <video>.
+  async function prepareFrames(t) {
     const jobs = [];
     for (const c of S.clips) {
       const m = mediaOf(c);
       if (!m || m.kind !== 'video' || S.off[c.track] || !isActive(c, t)) continue;
-      const e = elFor(c); e.el.muted = true;
-      jobs.push(seekEl(e.el, clamp(c.in + (t - c.start) * c.speed, 0, Math.max(0, m.duration - 0.001))));
+      const r = dsrc.get(c.id);
+      if (!r) { jobs.push(seekClip(c, t)); continue; }
+      jobs.push(r.frameAt(clamp(c.in + (t - c.start) * c.speed, 0, m.duration)).then((f) => { wcFrames.set(c.id, f); }).catch(() => {
+        r.close(); dsrc.delete(c.id); wcFrames.delete(c.id); return seekClip(c, t);
+      }));
     }
     await Promise.all(jobs);
   }
+  // Untagged video is decoded with a default colour matrix that can differ from what <video> shows.
+  // Compare one decoded frame against the element's rendering and keep the best-matching setting.
+  const CS_VARIANTS = [
+    undefined,
+    { primaries: 'smpte170m', transfer: 'smpte170m', matrix: 'smpte170m', fullRange: false },
+    { primaries: 'bt709', transfer: 'bt709', matrix: 'bt709', fullRange: true },
+    { primaries: 'smpte170m', transfer: 'smpte170m', matrix: 'smpte170m', fullRange: true },
+  ];
+  async function calibrateColor(m, c, tr) {
+    const W = 64, H = 36, mk = () => { const k = document.createElement('canvas'); k.width = W; k.height = H; return k.getContext('2d', { willReadFrequently: true }); };
+    const t = clamp(c.in, 0, Math.max(0, m.duration - 0.001));
+    const e = elFor(c); e.el.muted = true; await seekEl(e.el, t);
+    if (e.el.readyState < 2) return;
+    const ref = mk(); ref.drawImage(e.el, 0, 0, W, H);
+    const R = ref.getImageData(0, 0, W, H).data;
+    let best, bd = Infinity, base = Infinity;
+    for (const cs of CS_VARIANTS) {
+      tr.colorSpace = cs;
+      const r = new Demux.Reader(tr);
+      try {
+        if (!(await r.start())) continue;
+        const f = await r.frameAt(t), g = mk(); g.drawImage(f, 0, 0, W, H); f.close();
+        const D = g.getImageData(0, 0, W, H).data; let d = 0;
+        for (let i = 0; i < D.length; i++) d += Math.abs(D[i] - R[i]);
+        if (cs === undefined) base = d;
+        if (d < bd && (cs === undefined || d < base * 0.8)) { bd = d; best = cs; }
+      } catch { /* variant unusable */ } finally { r.close(); }
+    }
+    tr.colorSpace = best;
+  }
+
+  async function openReaders(say) {
+    dsrc = new Map(); wcFrames = new Map();
+    if (!$('#expDec').checked || !window.Demux) return { used: 0, total: 0 };
+    const vids = S.clips.filter((c) => { const m = mediaOf(c); return m && m.kind === 'video' && !S.off[c.track]; });
+    say('تجهيز فك الترميز…', 0.03);
+    for (const c of vids) {
+      const m = mediaOf(c);
+      if (!demuxCache.has(m.id)) demuxCache.set(m.id, Demux.open(m.file || await (await fetch(m.url)).blob()));
+      const tr = await demuxCache.get(m.id); if (!tr) continue;
+      if (!m.colorChecked) { m.colorChecked = true; await calibrateColor(m, c, tr); }
+      const r = new Demux.Reader(tr);
+      if (await r.start()) dsrc.set(c.id, r);
+    }
+    return { used: dsrc.size, total: vids.length };
+  }
+  function closeReaders() { for (const r of dsrc.values()) r.close(); dsrc.clear(); for (const f of wcFrames.values()) { try { f.close(); } catch { /* already closed */ } } wcFrames.clear(); }
 
   // Candidate WebCodecs configs, best first: H.264 (-> MP4) then VP9 (-> WebM).
   async function pickWcConfig(w, h, bitrate) {
@@ -1306,6 +1363,7 @@
       const wav = wavBytes(await mixAudio(total)); check();
       await ff.writeFile('a.wav', wav);
 
+      const dec = await openReaders(say); check();
       S.res = res; for (const c of [cv, ov]) { c.width = res[0]; c.height = res[1]; }
       for (const c of S.clips) { const e = elFor(c); if (e) e.el.muted = true; }
       await Promise.all([...els.values()].map((e) => new Promise((r) => {
@@ -1323,7 +1381,7 @@
         enc.configure(pick.cfg);
         for (let i = 0; i < N; i++) {
           check(); if (encErr) throw encErr;
-          S.t = i / FPS; await seekAll(S.t); render();
+          S.t = i / FPS; await prepareFrames(S.t); render();
           const vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
           enc.encode(vf, { keyFrame: i % 60 === 0 }); vf.close();
           while (enc.encodeQueueSize > 6) { await new Promise((r) => enc.addEventListener('dequeue', r, { once: true })); check(); }
@@ -1352,7 +1410,7 @@
           const b = Math.min(N, a + CH), writes = [];
           for (let i = a; i < b; i++) {
             check();
-            S.t = i / FPS; await seekAll(S.t); render();
+            S.t = i / FPS; await prepareFrames(S.t); render();
             const name = fname(seg, i - a + 1);
             const w = new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.92)).then((bl) => bl.arrayBuffer()).then((ab) => ff.writeFile(name, new Uint8Array(ab)));
             w.catch(() => {}); // errors surface through Promise.all below; this keeps a cancel from leaving unhandled rejections
@@ -1389,12 +1447,13 @@
       doneUrl = URL.createObjectURL(new Blob([data], { type: outMime }));
       $('#expVideo').src = doneUrl;
       const dl = $('#expDl'); dl.href = doneUrl; dl.download = (S.name.trim() || 'video') + (outName.endsWith('webm') ? '.webm' : '.mp4');
-      say('اكتمل', 1); showExport('done'); toast(`اكتمل التصدير خلال ${Math.round((performance.now() - t0w) / 1000)} ث`);
+      say('اكتمل', 1); showExport('done'); toast(`اكتمل التصدير خلال ${Math.round((performance.now() - t0w) / 1000)} ث` + (dec.total ? ` · فك الترميز بـ WebCodecs: ${dec.used} من ${dec.total} مقاطع` : ''));
       ok = true;
     } catch (err) {
       if (err.message === 'cancel') { if (ffm) { try { ffm.terminate(); } catch { /* ignore */ } ffm = null; } $('#exportModal').hidden = true; }
       else { toast('تعذّر التصدير السريع: ' + err.message); showExport('opts'); }
     } finally {
+      closeReaders();
       if (enc && enc.state !== 'closed') { try { enc.close(); } catch { /* ignore */ } }
       S.res = orig; S.exporting = false; S.fast = false; S.t = 0; applyRes(); renderAll();
       if (!ok && ffm && !fastCancel) { for (const n of ['a.wav', 'out.mp4', 'out.webm', 'list.txt', 'v.h264', 'v.ivf']) { try { await ffm.deleteFile(n); } catch { /* ignore */ } } }
@@ -1403,7 +1462,7 @@
 
   function updateExpMode() {
     const mode = $('#expMode').value, fast = mode !== 'live';
-    $('#expFmtRow').hidden = fast; $('#expMuteLbl').hidden = fast; $('#expScaleRow').hidden = !fast;
+    $('#expFmtRow').hidden = fast; $('#expMuteLbl').hidden = fast; $('#expDecLbl').hidden = !fast; $('#expDec').disabled = !window.VideoDecoder; $('#expScaleRow').hidden = !fast;
     $('#expNote').textContent = mode === 'wc'
       ? 'يُرسم كل إطار على حدة ويُرمَّز بواسطة مشفّر المتصفح (WebCodecs، وغالبًا بتسريع العتاد)، ثم يُدمج مع الصوت بواسطة ffmpeg.wasm دون إعادة ترميز. الناتج MP4 (H.264) أو WebM (VP9) إن لم يدعم المتصفح H.264. لا يرتبط الزمن بمدة الفيديو.'
       : fast
@@ -1501,7 +1560,7 @@
     });
 
     // test / debugging hook
-    window.__studio = { S, pickWcConfig, loadFfmpeg, ivfBytes, wavBytes, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
+    window.__studio = { S, demuxOpen: (f) => Demux.open(f), pickWcConfig, loadFfmpeg, ivfBytes, wavBytes, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
   }
   init();
 })();

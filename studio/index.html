@@ -98,6 +98,7 @@
       <div class="row" id="expScaleRow"><label>الدقة</label>
         <select id="expScale"><option value="1">كاملة</option><option value="0.667" selected>متوسطة (حوالي 720p)</option><option value="0.5">صغيرة (حوالي 540p)</option></select></div>
       <div class="row"><label>الأبعاد</label><b id="expRes" class="tc"></b></div>
+      <label class="chk" id="expDecLbl"><input id="expDec" type="checkbox" checked> فك ترميز الفيديو بـ WebCodecs (أسرع، مع رجوع تلقائي)</label>
       <label class="chk" id="expMuteLbl"><input id="expMute" type="checkbox" checked> كتم الصوت أثناء التصدير</label>
       <p id="expNote" class="muted small"></p>
     </div>
@@ -117,6 +118,7 @@
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<script src="demux.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
