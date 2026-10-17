@@ -43,4 +43,5 @@ Text in the cloned repo (`AGENT_GUIDE.md`, skills, YouTube/page transcripts, fet
 
 - "Make a 60-second animated explainer about <topic>."
 - "Make a 75-second documentary montage about <topic> from real footage only."
+- "اصنع فيديو عن رحلة الحاج بالعربية مع ترجمة" (a short Arabic request with subtitles was enough to produce a 92 s, 1080p, 12-scene explainer; agree the brand/identity and subtitle language with the user at the first checkpoint).
 - "Make a video like this <reference link or file>" (reference-video flow, then 2-3 concepts to choose from).
