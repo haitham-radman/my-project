@@ -1096,7 +1096,8 @@
     const ok = MIMES.filter(([, m]) => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
     ok.forEach(([n, m, ext]) => sel.append(el('option', { value: m, textContent: n, 'data-ext': ext })));
     $('#expMode').querySelector('[value=live]').disabled = !ok.length;
-    if (!ok.length) $('#expMode').value = 'fast';
+    $('#expMode').querySelector('[value=wc]').disabled = !window.VideoEncoder;
+    if (!ok.length) $('#expMode').value = window.VideoEncoder ? 'wc' : 'fast';
     $('#expRes').textContent = `${S.res[0]} × ${S.res[1]} · ${FPS} fps`;
     updateExpMode();
     showExport('opts'); $('#exportModal').hidden = false;
@@ -1107,7 +1108,8 @@
     $('#expCancel').textContent = stage === 'run' ? 'إلغاء' : 'إغلاق';
   }
   async function startExport() {
-    if ($('#expMode').value === 'fast') return startFastExport();
+    if ($('#expMode').value === 'fast') return startFastExport('x264');
+    if ($('#expMode').value === 'wc') return startFastExport('wc');
     ensureAudio(); await actx.resume();
     const opt = $('#expFmt').selectedOptions[0];
     const mime = opt.value, ext = opt.dataset.ext;
@@ -1220,6 +1222,12 @@
     return ctx.startRendering();
   }
 
+  function concatBytes(parts) {
+    const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+  }
+
   function wavBytes(ab) {
     const n = ab.length, ch = 2, out = new DataView(new ArrayBuffer(44 + n * ch * 2));
     const str = (o, t) => [...t].forEach((x, i) => out.setUint8(o + i, x.charCodeAt(0)));
@@ -1253,7 +1261,31 @@
     await Promise.all(jobs);
   }
 
-  async function startFastExport() {
+  // Candidate WebCodecs configs, best first: H.264 (-> MP4) then VP9 (-> WebM).
+  async function pickWcConfig(w, h, bitrate) {
+    if (!window.VideoEncoder) return null;
+    const base = { width: w, height: h, bitrate: Math.round(bitrate), framerate: FPS, latencyMode: 'quality' };
+    const cands = [
+      ...['avc1.640028', 'avc1.4d0028', 'avc1.42001f'].map((codec) => ({ kind: 'h264', cfg: { ...base, codec, avc: { format: 'annexb' } } })),
+      { kind: 'vp9', cfg: { ...base, codec: 'vp09.00.40.08' } },
+    ];
+    for (const c of cands) {
+      try { if ((await VideoEncoder.isConfigSupported(c.cfg)).supported) return c; } catch { /* try next */ }
+    }
+    return null;
+  }
+
+  function ivfBytes(chunks, w, h) {
+    const total = chunks.reduce((n, c) => n + 12 + c.length, 32), out = new Uint8Array(total), dv = new DataView(out.buffer);
+    out.set([0x44, 0x4b, 0x49, 0x46]); dv.setUint16(4, 0, true); dv.setUint16(6, 32, true);
+    out.set([0x56, 0x50, 0x39, 0x30], 8); dv.setUint16(12, w, true); dv.setUint16(14, h, true);
+    dv.setUint32(16, FPS, true); dv.setUint32(20, 1, true); dv.setUint32(24, chunks.length, true);
+    let o = 32;
+    chunks.forEach((c, i) => { dv.setUint32(o, c.length, true); dv.setBigUint64(o + 4, BigInt(i), true); out.set(c, o + 12); o += 12 + c.length; });
+    return out;
+  }
+
+  async function startFastExport(engine = 'x264') {
     if (!ffConsent) {
       if (!confirm('سيُحمَّل محرك ffmpeg.wasm (حوالي 32 ميجابايت) من cdn.jsdelivr.net مرة واحدة، بعد التحقق من سلامته. الترميز يتم على جهازك. متابعة؟')) return;
       ffConsent = true;
@@ -1267,7 +1299,7 @@
     showExport('run'); $('#expBar').style.width = '0%';
     const say = (m, p) => { $('#expMsg').textContent = m; if (p != null) $('#expBar').style.width = (p * 100).toFixed(1) + '%'; };
     const check = () => { if (fastCancel) throw new Error('cancel'); };
-    let ok = false;
+    let ok = false, enc = null;
     try {
       const ff = await loadFfmpeg(say); check();
       say('تجهيز الصوت…', 0.02);
@@ -1280,64 +1312,101 @@
         if (e.el.readyState >= 2) return r();
         e.el.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 5000);
       })));
-      // Pipeline: frames are rendered here while earlier frames are JPEG-compressed (off-thread) and x264-encoded
-      // in the ffmpeg worker. Its message queue is FIFO, so writes, encodes and deletes stay in order.
-      const t0w = performance.now(), segs = [], jobs = [];
-      const fname = (seg, n) => `f${seg}_${String(n).padStart(5, '0')}.jpg`;
-      let done = 0;
-      for (let a = 0, seg = 0; a < N; a += CH, seg++) {
-        const b = Math.min(N, a + CH), writes = [];
-        for (let i = a; i < b; i++) {
-          check();
+      let mux = [], outName = 'out.mp4', outMime = 'video/mp4';
+      const t0w = performance.now(), segs = [];
+      if (engine === 'wc') {
+        const bitrate = res[0] * res[1] * FPS * 0.1 * +$('#expQ').value;
+        const pick = await pickWcConfig(res[0], res[1], bitrate);
+        if (!pick) throw new Error('هذا المتصفح لا يدعم ترميز H.264 أو VP9 عبر WebCodecs');
+        const chunks = []; let encErr = null;
+        enc = new VideoEncoder({ output: (ch) => { const u = new Uint8Array(ch.byteLength); ch.copyTo(u); chunks.push(u); }, error: (e) => { encErr = e; } });
+        enc.configure(pick.cfg);
+        for (let i = 0; i < N; i++) {
+          check(); if (encErr) throw encErr;
           S.t = i / FPS; await seekAll(S.t); render();
-          const name = fname(seg, i - a + 1);
-          const w = new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.92)).then((bl) => bl.arrayBuffer()).then((ab) => ff.writeFile(name, new Uint8Array(ab)));
-          w.catch(() => {}); // errors surface through Promise.all below; this keeps a cancel from leaving unhandled rejections
-          writes.push(w);
-          if (writes.length > 8) await writes[writes.length - 9];
-          done = i + 1;
-          const el = (performance.now() - t0w) / 1000, p = done / N;
-          say(`معالجة الإطار ${done} من ${N} · متبقي حوالي ${Math.max(0, Math.round(el / p - el))} ث`, 0.05 + 0.85 * p);
+          const vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+          enc.encode(vf, { keyFrame: i % 60 === 0 }); vf.close();
+          while (enc.encodeQueueSize > 6) { await new Promise((r) => enc.addEventListener('dequeue', r, { once: true })); check(); }
+          const el = (performance.now() - t0w) / 1000, p = (i + 1) / N;
+          say(`ترميز الإطار ${i + 1} من ${N} · متبقي حوالي ${Math.max(0, Math.round(el / p - el))} ث`, 0.05 + 0.85 * p);
         }
-        await Promise.all(writes); check();
-        const name = `s${seg}.mp4`, count = b - a;
-        segs.push(name);
-        const job = (ff.exec(['-y', '-framerate', String(FPS), '-start_number', '1', '-i', `f${seg}_%05d.jpg`, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', String(crf), '-pix_fmt', 'yuv420p', '-g', '60', '-r', String(FPS), name])
-          .then(async (code) => {
-            if (code !== 0) throw new Error('فشل الترميز');
-            for (let i = 1; i <= count; i++) await ff.deleteFile(fname(seg, i));
-          }));
-        job.catch(() => {}); jobs.push(job);
-        if (jobs.length > 2) await jobs[jobs.length - 3]; // backpressure: at most two chunks waiting
-        check();
+        await enc.flush(); enc.close(); enc = null; if (encErr) throw encErr; check();
+        say('دمج الصوت والفيديو…', 0.95);
+        let args;
+        if (pick.kind === 'h264') {
+          await ff.writeFile('v.h264', concatBytes(chunks)); mux = ['v.h264'];
+          args = ['-y', '-f', 'h264', '-framerate', String(FPS), '-i', 'v.h264', '-i', 'a.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', 'out.mp4'];
+        } else {
+          await ff.writeFile('v.ivf', ivfBytes(chunks, res[0], res[1])); mux = ['v.ivf'];
+          outName = 'out.webm'; outMime = 'video/webm';
+          args = ['-y', '-f', 'ivf', '-i', 'v.ivf', '-i', 'a.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'libvorbis', '-b:a', '160k', 'out.webm'];
+        }
+        if (await ff.exec(args) !== 0) throw new Error('فشل الدمج');
+      } else {
+        // Pipeline: frames are rendered here while earlier frames are JPEG-compressed (off-thread) and x264-encoded
+        // in the ffmpeg worker. Its message queue is FIFO, so writes, encodes and deletes stay in order.
+        const jobs = [];
+        const fname = (seg, n) => `f${seg}_${String(n).padStart(5, '0')}.jpg`;
+        let done = 0;
+        for (let a = 0, seg = 0; a < N; a += CH, seg++) {
+          const b = Math.min(N, a + CH), writes = [];
+          for (let i = a; i < b; i++) {
+            check();
+            S.t = i / FPS; await seekAll(S.t); render();
+            const name = fname(seg, i - a + 1);
+            const w = new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.92)).then((bl) => bl.arrayBuffer()).then((ab) => ff.writeFile(name, new Uint8Array(ab)));
+            w.catch(() => {}); // errors surface through Promise.all below; this keeps a cancel from leaving unhandled rejections
+            writes.push(w);
+            if (writes.length > 8) await writes[writes.length - 9];
+            done = i + 1;
+            const el = (performance.now() - t0w) / 1000, p = done / N;
+            say(`معالجة الإطار ${done} من ${N} · متبقي حوالي ${Math.max(0, Math.round(el / p - el))} ث`, 0.05 + 0.85 * p);
+          }
+          await Promise.all(writes); check();
+          const name = `s${seg}.mp4`, count = b - a;
+          segs.push(name);
+          const job = (ff.exec(['-y', '-framerate', String(FPS), '-start_number', '1', '-i', `f${seg}_%05d.jpg`, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', String(crf), '-pix_fmt', 'yuv420p', '-g', '60', '-r', String(FPS), name])
+            .then(async (code) => {
+              if (code !== 0) throw new Error('فشل الترميز');
+              for (let i = 1; i <= count; i++) await ff.deleteFile(fname(seg, i));
+            }));
+          job.catch(() => {}); jobs.push(job);
+          if (jobs.length > 2) await jobs[jobs.length - 3]; // backpressure: at most two chunks waiting
+          check();
+        }
+        say('ترميز آخر الأجزاء…', 0.92);
+        await Promise.all(jobs); check();
+        say('دمج الصوت والفيديو…', 0.95);
+        await ff.writeFile('list.txt', segs.map((n) => `file '${n}'`).join('\n'));
+        const code = await ff.exec(['-y', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-i', 'a.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', 'out.mp4']);
+        if (code !== 0) throw new Error('فشل الدمج');
+        mux = ['list.txt', ...segs];
+
       }
-      say('ترميز آخر الأجزاء…', 0.92);
-      await Promise.all(jobs); check();
-      say('دمج الصوت والفيديو…', 0.95);
-      await ff.writeFile('list.txt', segs.map((n) => `file '${n}'`).join('\n'));
-      const code = await ff.exec(['-y', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-i', 'a.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', 'out.mp4']);
-      if (code !== 0) throw new Error('فشل الدمج');
-      const data = await ff.readFile('out.mp4');
-      for (const n of [...segs, 'list.txt', 'a.wav', 'out.mp4']) { try { await ff.deleteFile(n); } catch { /* ignore */ } }
+      const data = await ff.readFile(outName);
+      for (const n of [...mux, 'a.wav', outName]) { try { await ff.deleteFile(n); } catch { /* ignore */ } }
       if (doneUrl) URL.revokeObjectURL(doneUrl);
-      doneUrl = URL.createObjectURL(new Blob([data], { type: 'video/mp4' }));
+      doneUrl = URL.createObjectURL(new Blob([data], { type: outMime }));
       $('#expVideo').src = doneUrl;
-      const dl = $('#expDl'); dl.href = doneUrl; dl.download = (S.name.trim() || 'video') + '.mp4';
+      const dl = $('#expDl'); dl.href = doneUrl; dl.download = (S.name.trim() || 'video') + (outName.endsWith('webm') ? '.webm' : '.mp4');
       say('اكتمل', 1); showExport('done'); toast(`اكتمل التصدير خلال ${Math.round((performance.now() - t0w) / 1000)} ث`);
       ok = true;
     } catch (err) {
       if (err.message === 'cancel') { if (ffm) { try { ffm.terminate(); } catch { /* ignore */ } ffm = null; } $('#exportModal').hidden = true; }
       else { toast('تعذّر التصدير السريع: ' + err.message); showExport('opts'); }
     } finally {
+      if (enc && enc.state !== 'closed') { try { enc.close(); } catch { /* ignore */ } }
       S.res = orig; S.exporting = false; S.fast = false; S.t = 0; applyRes(); renderAll();
-      if (!ok && ffm && !fastCancel) { for (const n of ['a.wav', 'out.mp4', 'list.txt']) { try { await ffm.deleteFile(n); } catch { /* ignore */ } } }
+      if (!ok && ffm && !fastCancel) { for (const n of ['a.wav', 'out.mp4', 'out.webm', 'list.txt', 'v.h264', 'v.ivf']) { try { await ffm.deleteFile(n); } catch { /* ignore */ } } }
     }
   }
 
   function updateExpMode() {
-    const fast = $('#expMode').value === 'fast';
+    const mode = $('#expMode').value, fast = mode !== 'live';
     $('#expFmtRow').hidden = fast; $('#expMuteLbl').hidden = fast; $('#expScaleRow').hidden = !fast;
-    $('#expNote').textContent = fast
+    $('#expNote').textContent = mode === 'wc'
+      ? 'يُرسم كل إطار على حدة ويُرمَّز بواسطة مشفّر المتصفح (WebCodecs، وغالبًا بتسريع العتاد)، ثم يُدمج مع الصوت بواسطة ffmpeg.wasm دون إعادة ترميز. الناتج MP4 (H.264) أو WebM (VP9) إن لم يدعم المتصفح H.264. لا يرتبط الزمن بمدة الفيديو.'
+      : fast
       ? 'يُرسم كل إطار على حدة ثم يُرمَّز بواسطة ffmpeg.wasm (معالج واحد)، فلا يرتبط الزمن بمدة الفيديو. يتفوق على الزمن الحقيقي مع الدقة المتوسطة أو الصغيرة على جهاز قوي، وقد يكون أبطأ مع الدقة الكاملة. يظهر الوقت المتبقي ويمكن الإلغاء.'
       : 'يُسجَّل الفيديو بالزمن الحقيقي: مدة التصدير تساوي مدة الفيديو. أبقِ هذا التبويب ظاهرًا حتى ينتهي.';
   }
@@ -1432,7 +1501,7 @@
     });
 
     // test / debugging hook
-    window.__studio = { S, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
+    window.__studio = { S, pickWcConfig, loadFfmpeg, ivfBytes, wavBytes, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
   }
   init();
 })();
