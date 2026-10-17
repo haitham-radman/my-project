@@ -171,3 +171,4 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
 button.wide { display: block; width: 100%; margin-top: 8px; text-align: center; }
 button.ghost.wide { border: 1px solid var(--line); }
+[hidden] { display: none !important; }

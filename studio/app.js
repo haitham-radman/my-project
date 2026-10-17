@@ -582,6 +582,7 @@
       const d = duration();
       if (S.t >= d) { S.t = d; pause(); if (S.exporting) finishExport(); }
     }
+    if (S.fast) { raf = requestAnimationFrame(frame); return; }
     syncMedia(); draw();
     $('#timecode').textContent = fmt(S.t);
     const x = Math.round(S.t * S.zoom);
@@ -1093,9 +1094,11 @@
     pause();
     const sel = $('#expFmt'); sel.innerHTML = '';
     const ok = MIMES.filter(([, m]) => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
-    if (!ok.length) { toast('المتصفح لا يدعم التسجيل. استخدم Chrome أو Edge.'); return; }
     ok.forEach(([n, m, ext]) => sel.append(el('option', { value: m, textContent: n, 'data-ext': ext })));
+    $('#expMode').querySelector('[value=live]').disabled = !ok.length;
+    if (!ok.length) $('#expMode').value = 'fast';
     $('#expRes').textContent = `${S.res[0]} × ${S.res[1]} · ${FPS} fps`;
+    updateExpMode();
     showExport('opts'); $('#exportModal').hidden = false;
   }
   function showExport(stage) {
@@ -1104,6 +1107,7 @@
     $('#expCancel').textContent = stage === 'run' ? 'إلغاء' : 'إغلاق';
   }
   async function startExport() {
+    if ($('#expMode').value === 'fast') return startFastExport();
     ensureAudio(); await actx.resume();
     const opt = $('#expFmt').selectedOptions[0];
     const mime = opt.value, ext = opt.dataset.ext;
@@ -1114,7 +1118,7 @@
     const stream = cv.captureStream(FPS);
     dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
     chunks = [];
-    rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: +$('#expQ').value, audioBitsPerSecond: 192000 });
+    rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000 * +$('#expQ').value, audioBitsPerSecond: 192000 });
     rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
     expInfo = { mime, ext, cancelled: false, total: duration() };
     rec.onstop = () => {
@@ -1143,8 +1147,199 @@
     setTimeout(() => { if (rec && rec.state !== 'inactive') rec.stop(); }, 400);
   }
   function cancelExport() {
+    if (S.fast) { fastCancel = true; return; }
     if (S.exporting && rec && rec.state !== 'inactive') { expInfo.cancelled = true; rec.stop(); return; }
     $('#exportModal').hidden = true; $('#expVideo').pause();
+  }
+
+
+  /* ---------- fast export: offline render + ffmpeg.wasm ---------- */
+  const FF = {
+    base: { ffmpeg: 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/', core: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/' },
+    // SHA-384 of the files in the npm tarballs; anything that doesn't match is refused
+    files: [
+      ['ffmpeg', 'ffmpeg.js', 'text/javascript', '6gtICseWoSfROfflbGSkg1kwPTH+2SxMvyn0e3THJbNoyPxx5tzNk4EXfLIHD2iD'],
+      ['ffmpeg', '814.ffmpeg.js', 'text/javascript', 'l2rTJ2R1KC9EDzuYSDeAvUOs6h0dm+YGX1oFKW7pn2e23NJ+JGHsFM+aPczr7nrr'],
+      ['core', 'ffmpeg-core.js', 'text/javascript', 'sKfkiFtvUk+vexk+0EUhEh366190/4WpgUAsUvaxEfyg7+E1Zt5Y5hrsU808g8Q9'],
+      ['core', 'ffmpeg-core.wasm', 'application/wasm', 'U1VDhkPYrM3wTCT4/vjSpSsKqG/UjljYrYCI4hBSJ02svbCkxuCi6U6u/peg5vpW'],
+    ],
+  };
+  let ffm = null, ffConsent = false, fastCancel = false;
+
+  async function loadFfmpeg(say) {
+    if (ffm) return ffm;
+    const urls = {};
+    for (const [grp, name, mime, hash] of FF.files) {
+      say(`تحميل ${name}…`);
+      const r = await fetch(FF.base[grp] + name);
+      if (!r.ok) throw new Error('تعذّر تحميل ' + name);
+      const buf = await r.arrayBuffer();
+      const got = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-384', buf))));
+      if (got !== hash) throw new Error('فشل التحقق من سلامة ' + name);
+      urls[name] = URL.createObjectURL(new Blob([buf], { type: mime }));
+    }
+    await new Promise((res, rej) => {
+      const sc = document.createElement('script'); sc.src = urls['ffmpeg.js'];
+      sc.onload = res; sc.onerror = () => rej(new Error('تعذّر تشغيل مكتبة ffmpeg')); document.head.append(sc);
+    });
+    say('تهيئة ffmpeg…');
+    // ffmpeg.js starts its worker from a path next to its own script, which is a blob: URL here.
+    // Hand it the verified worker blob instead (as a classic worker; classWorkerURL would make it a module worker,
+    // where the core can't be loaded).
+    const f = new FFmpegWASM.FFmpeg(), NativeWorker = window.Worker;
+    window.Worker = function (u, o) { return new NativeWorker(String(u).endsWith('814.ffmpeg.js') ? urls['814.ffmpeg.js'] : u, o); };
+    try { await f.load({ coreURL: urls['ffmpeg-core.js'], wasmURL: urls['ffmpeg-core.wasm'] }); } finally { window.Worker = NativeWorker; }
+    ffm = f; return f;
+  }
+
+  const decodeCache = new Map();
+  async function decodeMedia(m) {
+    if (decodeCache.has(m.id)) return decodeCache.get(m.id);
+    let buf = null;
+    try {
+      const raw = await (await fetch(m.url)).arrayBuffer();
+      buf = await new OfflineAudioContext(2, 1, 44100).decodeAudioData(raw);
+    } catch { /* no audio track */ }
+    decodeCache.set(m.id, buf); return buf;
+  }
+
+  async function mixAudio(total) {
+    const SR = 44100, ctx = new OfflineAudioContext(2, Math.max(1, Math.ceil(total * SR)), SR);
+    for (const c of S.clips) {
+      const m = mediaOf(c);
+      if (!m || m.kind === 'image' || S.off[c.track]) continue;
+      const buf = await decodeMedia(m); if (!buf) continue;
+      const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = c.speed;
+      const g = ctx.createGain(), end = c.start + c.dur, v = c.vol;
+      g.gain.setValueAtTime(c.fadeIn > 0 ? 0 : v, c.start);
+      if (c.fadeIn > 0) g.gain.linearRampToValueAtTime(v, c.start + c.fadeIn);
+      if (c.fadeOut > 0) { g.gain.setValueAtTime(v, Math.max(c.start + c.fadeIn, end - c.fadeOut)); g.gain.linearRampToValueAtTime(0, end); }
+      src.connect(g).connect(ctx.destination);
+      src.start(c.start, c.in, c.dur * c.speed);
+    }
+    return ctx.startRendering();
+  }
+
+  function wavBytes(ab) {
+    const n = ab.length, ch = 2, out = new DataView(new ArrayBuffer(44 + n * ch * 2));
+    const str = (o, t) => [...t].forEach((x, i) => out.setUint8(o + i, x.charCodeAt(0)));
+    str(0, 'RIFF'); out.setUint32(4, 36 + n * 4, true); str(8, 'WAVEfmt '); out.setUint32(16, 16, true);
+    out.setUint16(20, 1, true); out.setUint16(22, ch, true); out.setUint32(24, ab.sampleRate, true);
+    out.setUint32(28, ab.sampleRate * 4, true); out.setUint16(32, 4, true); out.setUint16(34, 16, true);
+    str(36, 'data'); out.setUint32(40, n * 4, true);
+    const L = ab.getChannelData(0), R = ab.numberOfChannels > 1 ? ab.getChannelData(1) : L;
+    for (let i = 0, o = 44; i < n; i++, o += 4) {
+      out.setInt16(o, clamp(L[i], -1, 1) * 0x7fff, true); out.setInt16(o + 2, clamp(R[i], -1, 1) * 0x7fff, true);
+    }
+    return new Uint8Array(out.buffer);
+  }
+
+  function seekEl(v, target) {
+    return new Promise((res) => {
+      if (Math.abs(v.currentTime - target) < 0.0005 && v.readyState >= 2) return res();
+      const fin = () => { clearTimeout(to); v.removeEventListener('seeked', fin); res(); };
+      const to = setTimeout(fin, 4000);
+      v.addEventListener('seeked', fin); v.currentTime = target;
+    });
+  }
+  async function seekAll(t) {
+    const jobs = [];
+    for (const c of S.clips) {
+      const m = mediaOf(c);
+      if (!m || m.kind !== 'video' || S.off[c.track] || !isActive(c, t)) continue;
+      const e = elFor(c); e.el.muted = true;
+      jobs.push(seekEl(e.el, clamp(c.in + (t - c.start) * c.speed, 0, Math.max(0, m.duration - 0.001))));
+    }
+    await Promise.all(jobs);
+  }
+
+  async function startFastExport() {
+    if (!ffConsent) {
+      if (!confirm('سيُحمَّل محرك ffmpeg.wasm (حوالي 32 ميجابايت) من cdn.jsdelivr.net مرة واحدة، بعد التحقق من سلامته. الترميز يتم على جهازك. متابعة؟')) return;
+      ffConsent = true;
+    }
+    const total = duration(), orig = S.res.slice();
+    const k = +$('#expScale').value, crf = { 0.5: 28, 1: 23, 2: 18 }[$('#expQ').value] || 23;
+    const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+    const res = [even(orig[0] * k), even(orig[1] * k)];
+    const N = Math.max(1, Math.ceil(total * FPS)), CH = 90;
+    pause(); fastCancel = false; S.exporting = true; S.fast = true; S.sel = null;
+    showExport('run'); $('#expBar').style.width = '0%';
+    const say = (m, p) => { $('#expMsg').textContent = m; if (p != null) $('#expBar').style.width = (p * 100).toFixed(1) + '%'; };
+    const check = () => { if (fastCancel) throw new Error('cancel'); };
+    let ok = false;
+    try {
+      const ff = await loadFfmpeg(say); check();
+      say('تجهيز الصوت…', 0.02);
+      const wav = wavBytes(await mixAudio(total)); check();
+      await ff.writeFile('a.wav', wav);
+
+      S.res = res; for (const c of [cv, ov]) { c.width = res[0]; c.height = res[1]; }
+      for (const c of S.clips) { const e = elFor(c); if (e) e.el.muted = true; }
+      await Promise.all([...els.values()].map((e) => new Promise((r) => {
+        if (e.el.readyState >= 2) return r();
+        e.el.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 5000);
+      })));
+      // Pipeline: frames are rendered here while earlier frames are JPEG-compressed (off-thread) and x264-encoded
+      // in the ffmpeg worker. Its message queue is FIFO, so writes, encodes and deletes stay in order.
+      const t0w = performance.now(), segs = [], jobs = [];
+      const fname = (seg, n) => `f${seg}_${String(n).padStart(5, '0')}.jpg`;
+      let done = 0;
+      for (let a = 0, seg = 0; a < N; a += CH, seg++) {
+        const b = Math.min(N, a + CH), writes = [];
+        for (let i = a; i < b; i++) {
+          check();
+          S.t = i / FPS; await seekAll(S.t); render();
+          const name = fname(seg, i - a + 1);
+          const w = new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.92)).then((bl) => bl.arrayBuffer()).then((ab) => ff.writeFile(name, new Uint8Array(ab)));
+          w.catch(() => {}); // errors surface through Promise.all below; this keeps a cancel from leaving unhandled rejections
+          writes.push(w);
+          if (writes.length > 8) await writes[writes.length - 9];
+          done = i + 1;
+          const el = (performance.now() - t0w) / 1000, p = done / N;
+          say(`معالجة الإطار ${done} من ${N} · متبقي حوالي ${Math.max(0, Math.round(el / p - el))} ث`, 0.05 + 0.85 * p);
+        }
+        await Promise.all(writes); check();
+        const name = `s${seg}.mp4`, count = b - a;
+        segs.push(name);
+        const job = (ff.exec(['-y', '-framerate', String(FPS), '-start_number', '1', '-i', `f${seg}_%05d.jpg`, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', String(crf), '-pix_fmt', 'yuv420p', '-g', '60', '-r', String(FPS), name])
+          .then(async (code) => {
+            if (code !== 0) throw new Error('فشل الترميز');
+            for (let i = 1; i <= count; i++) await ff.deleteFile(fname(seg, i));
+          }));
+        job.catch(() => {}); jobs.push(job);
+        if (jobs.length > 2) await jobs[jobs.length - 3]; // backpressure: at most two chunks waiting
+        check();
+      }
+      say('ترميز آخر الأجزاء…', 0.92);
+      await Promise.all(jobs); check();
+      say('دمج الصوت والفيديو…', 0.95);
+      await ff.writeFile('list.txt', segs.map((n) => `file '${n}'`).join('\n'));
+      const code = await ff.exec(['-y', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-i', 'a.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', 'out.mp4']);
+      if (code !== 0) throw new Error('فشل الدمج');
+      const data = await ff.readFile('out.mp4');
+      for (const n of [...segs, 'list.txt', 'a.wav', 'out.mp4']) { try { await ff.deleteFile(n); } catch { /* ignore */ } }
+      if (doneUrl) URL.revokeObjectURL(doneUrl);
+      doneUrl = URL.createObjectURL(new Blob([data], { type: 'video/mp4' }));
+      $('#expVideo').src = doneUrl;
+      const dl = $('#expDl'); dl.href = doneUrl; dl.download = (S.name.trim() || 'video') + '.mp4';
+      say('اكتمل', 1); showExport('done'); toast(`اكتمل التصدير خلال ${Math.round((performance.now() - t0w) / 1000)} ث`);
+      ok = true;
+    } catch (err) {
+      if (err.message === 'cancel') { if (ffm) { try { ffm.terminate(); } catch { /* ignore */ } ffm = null; } $('#exportModal').hidden = true; }
+      else { toast('تعذّر التصدير السريع: ' + err.message); showExport('opts'); }
+    } finally {
+      S.res = orig; S.exporting = false; S.fast = false; S.t = 0; applyRes(); renderAll();
+      if (!ok && ffm && !fastCancel) { for (const n of ['a.wav', 'out.mp4', 'list.txt']) { try { await ffm.deleteFile(n); } catch { /* ignore */ } } }
+    }
+  }
+
+  function updateExpMode() {
+    const fast = $('#expMode').value === 'fast';
+    $('#expFmtRow').hidden = fast; $('#expMuteLbl').hidden = fast; $('#expScaleRow').hidden = !fast;
+    $('#expNote').textContent = fast
+      ? 'يُرسم كل إطار على حدة ثم يُرمَّز بواسطة ffmpeg.wasm (معالج واحد)، فلا يرتبط الزمن بمدة الفيديو. يتفوق على الزمن الحقيقي مع الدقة المتوسطة أو الصغيرة على جهاز قوي، وقد يكون أبطأ مع الدقة الكاملة. يظهر الوقت المتبقي ويمكن الإلغاء.'
+      : 'يُسجَّل الفيديو بالزمن الحقيقي: مدة التصدير تساوي مدة الفيديو. أبقِ هذا التبويب ظاهرًا حتى ينتهي.';
   }
 
   /* ---------- project-level ---------- */
@@ -1186,7 +1381,7 @@
     $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
     $('#btnSplit').onclick = split; $('#btnDup').onclick = dupSel; $('#btnDel').onclick = () => removeSel(false);
     $('#btnNew').onclick = newProject; $('#btnExport').onclick = openExport;
-    $('#expStart').onclick = startExport; $('#expCancel').onclick = cancelExport;
+    $('#expStart').onclick = startExport; $('#expMode').onchange = updateExpMode; $('#expCancel').onclick = cancelExport;
     $('#aspect').onchange = (e) => setAspect(e.target.value);
     $('#projName').onchange = (e) => { S.name = e.target.value; commit(); };
     $('#snap').onchange = (e) => { S.snap = e.target.checked; };
@@ -1237,7 +1432,7 @@
     });
 
     // test / debugging hook
-    window.__studio = { S, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
+    window.__studio = { S, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
   }
   init();
 })();

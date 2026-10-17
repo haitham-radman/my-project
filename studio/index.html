@@ -88,12 +88,17 @@
   <div class="card">
     <h3>تصدير الفيديو</h3>
     <div id="expOpts">
-      <div class="row"><label>الصيغة</label><select id="expFmt"></select></div>
+      <div class="row"><label>الطريقة</label><select id="expMode">
+        <option value="live">مباشر: تسجيل بالزمن الحقيقي</option>
+        <option value="fast">ffmpeg.wasm: MP4 H.264 (تجريبي)</option></select></div>
+      <div class="row" id="expFmtRow"><label>الصيغة</label><select id="expFmt"></select></div>
       <div class="row"><label>الجودة</label>
-        <select id="expQ"><option value="4000000">متوسطة (4 ميجابت/ث)</option><option value="8000000" selected>عالية (8 ميجابت/ث)</option><option value="16000000">قصوى (16 ميجابت/ث)</option></select></div>
-      <div class="row"><label>الدقة</label><b id="expRes" class="tc"></b></div>
-      <label class="chk"><input id="expMute" type="checkbox" checked> كتم الصوت أثناء التصدير</label>
-      <p class="muted small">يُسجَّل الفيديو بالزمن الحقيقي: مدة التصدير تساوي مدة الفيديو. أبقِ هذه التبويب ظاهرًا حتى ينتهي.</p>
+        <select id="expQ"><option value="0.5">متوسطة</option><option value="1" selected>عالية</option><option value="2">قصوى</option></select></div>
+      <div class="row" id="expScaleRow"><label>الدقة</label>
+        <select id="expScale"><option value="1">كاملة</option><option value="0.667" selected>متوسطة (حوالي 720p)</option><option value="0.5">صغيرة (حوالي 540p)</option></select></div>
+      <div class="row"><label>الأبعاد</label><b id="expRes" class="tc"></b></div>
+      <label class="chk" id="expMuteLbl"><input id="expMute" type="checkbox" checked> كتم الصوت أثناء التصدير</label>
+      <p id="expNote" class="muted small"></p>
     </div>
     <div id="expRun" hidden>
       <div class="bar"><i id="expBar"></i></div>
