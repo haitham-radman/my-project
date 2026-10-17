@@ -55,7 +55,8 @@ py -3 -m venv $HOME\.prep-venv; & $HOME\.prep-venv\Scripts\python.exe -m pip ins
 </div>
 
 ```bash
-git clone https://github.com/ISMAIL-debug-ctrl/prep ~/.claude/skills/prep
+# Do not run in this repo: it would overwrite the reviewed copy (see SKILL.md "Local policy")
+# git clone https://github.com/ISMAIL-debug-ctrl/prep ~/.claude/skills/prep
 ```
 
 <div dir="rtl">
@@ -65,7 +66,8 @@ git clone https://github.com/ISMAIL-debug-ctrl/prep ~/.claude/skills/prep
 </div>
 
 ```powershell
-git clone https://github.com/ISMAIL-debug-ctrl/prep $HOME\.claude\skills\prep
+# Do not run in this repo (see SKILL.md "Local policy")
+# git clone https://github.com/ISMAIL-debug-ctrl/prep $HOME\.claude\skills\prep
 ```
 
 <div dir="rtl">
@@ -120,7 +122,7 @@ mkdir -p ~/.premiere-mcp-bridge && printf '{\n  "telemetry": false,\n  "updateCh
 </div>
 
 ```bash
-npx davinci-resolve-mcp setup
+npm_config_ignore_scripts=true npx davinci-resolve-mcp@4.13.6 setup
 ```
 
 <div dir="rtl">

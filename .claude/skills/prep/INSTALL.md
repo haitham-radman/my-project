@@ -30,9 +30,11 @@ when CUDA works, otherwise CPU — slower). The first transcription downloads th
 
 ## 2. The skill
 ```bash
-git clone https://github.com/ISMAIL-debug-ctrl/prep ~/.claude/skills/prep
+# Do not run in this repo: it would overwrite the reviewed copy (see SKILL.md "Local policy")
+# git clone https://github.com/ISMAIL-debug-ctrl/prep ~/.claude/skills/prep
 ```
-Windows: `git clone https://github.com/ISMAIL-debug-ctrl/prep $HOME\.claude\skills\prep`
+Windows: `# Do not run in this repo (see SKILL.md "Local policy")
+# git clone https://github.com/ISMAIL-debug-ctrl/prep $HOME\.claude\skills\prep`
 Claude Code then offers `/prep`.
 
 ## 3. The Premiere bridge
@@ -63,7 +65,7 @@ Restart Premiere, open a project, open `Window > Extensions > MCP Bridge (CEP)` 
 `/prep` drives Resolve through the community [DaVinci Resolve MCP](https://github.com/samuelgursky/davinci-resolve-mcp)
 (MIT, third-party — read it before installing):
 ```bash
-npx davinci-resolve-mcp setup
+npm_config_ignore_scripts=true npx davinci-resolve-mcp@4.13.6 setup
 ```
 - **Resolve Studio:** Preferences > System > General > External scripting using = **Local**.
 - **Free Resolve:** external scripting is a Studio feature; the MCP's README explains its bridge script, run from Workspace > Scripts.
