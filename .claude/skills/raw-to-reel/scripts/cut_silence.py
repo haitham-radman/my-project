@@ -42,6 +42,16 @@ def keep_segments(total, sil, pad):
     return segs
 
 
+def cut(src, dst, segs):
+    """Render only the given (start, end) ranges of src into dst. Returns an error string or None."""
+    sel = "+".join(f"between(t,{s:.3f},{e:.3f})" for s, e in segs)
+    r = run(["ffmpeg", "-y", "-hide_banner", "-i", src,
+             "-vf", f"select='{sel}',setpts=N/FRAME_RATE/TB",
+             "-af", f"aselect='{sel}',asetpts=N/SR/TB",
+             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", dst])
+    return r.stderr[-800:] if r.returncode else None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("input")
@@ -55,13 +65,9 @@ def main():
     segs = keep_segments(total, silences(a.input, a.noise_db, a.min_silence), a.pad)
     if not segs:
         sys.exit("no speech found; lower --noise-db")
-    sel = "+".join(f"between(t,{s:.3f},{e:.3f})" for s, e in segs)
-    r = run(["ffmpeg", "-y", "-hide_banner", "-i", a.input,
-             "-vf", f"select='{sel}',setpts=N/FRAME_RATE/TB",
-             "-af", f"aselect='{sel}',asetpts=N/SR/TB",
-             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", a.output])
-    if r.returncode:
-        sys.exit(r.stderr[-800:])
+    err = cut(a.input, a.output, segs)
+    if err:
+        sys.exit(err)
     print(json.dumps({"original": round(total, 2),
                       "kept": round(sum(e - s for s, e in segs), 2),
                       "segments": [[round(s, 2), round(e, 2)] for s, e in segs]}))

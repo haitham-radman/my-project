@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raw to Reel</title>
+<style>
+:root{--bg:#f4f1ee;--card:#fff;--fg:#1c1b1a;--mut:#6b6762;--acc:#d0664f;--line:#e2ddd8}
+@media (prefers-color-scheme:dark){:root{--bg:#161514;--card:#201f1d;--fg:#f1eee9;--mut:#a29d96;--line:#34322f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,"Noto Sans Arabic",sans-serif}
+main{max-width:560px;margin:0 auto;padding:24px 16px}
+h1{font-size:1.4rem;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 20px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:1rem;margin:0 0 12px;display:flex;gap:10px;align-items:center}
+h2 b{background:var(--acc);color:#fff;border-radius:50%;width:26px;height:26px;display:grid;place-items:center;font-size:.85rem}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:28px 12px;text-align:center;color:var(--mut);cursor:pointer}
+#drop.on{border-color:var(--acc)}
+label.t{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+label.t:first-of-type{border-top:0}
+input[type=checkbox]{appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;cursor:pointer;transition:.15s}
+input[type=checkbox]::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s}
+input[type=checkbox]:checked{background:var(--acc)}
+input[type=checkbox]:checked::after{inset-inline-start:21px}
+button{width:100%;padding:13px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:600 1rem inherit;font-family:inherit;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+#log{white-space:pre-wrap;font:.85rem/1.6 ui-monospace,monospace;color:var(--mut);direction:ltr;text-align:left}
+a.dl{color:var(--acc);font-weight:600}
+small{color:var(--mut)}
+</style>
+</head>
+<body>
+<main>
+<h1>Raw to Reel</h1>
+<p class="sub">يعمل على جهازك فقط. الفيديو الأصلي لا يتغيّر.</p>
+<section>
+  <h2><b>1</b> نقِّ الفيديو اللي بتعدّله</h2>
+  <div id="drop">اضغط أو اسحب الفيديو هنا</div>
+  <input id="file" type="file" accept="video/*" hidden>
+</section>
+<section>
+  <h2><b>2</b> حدد التعديلات</h2>
+  <label class="t">شيل اللقطات الغلط <input type="checkbox" id="badtakes"></label>
+  <label class="t">حذف الصمت <input type="checkbox" id="silence"></label>
+  <label class="t">captions متحركة <input type="checkbox" id="captions"></label>
+  <label class="t">أصوات المؤثرات <input type="checkbox" id="sfx"></label>
+  <small>اللقطات الغلط والـ captions تحتاج faster-whisper محلياً.</small>
+</section>
+<section>
+  <h2>تعديل بضغطة وحدة</h2>
+  <button id="go" disabled>Edit Video</button>
+  <p id="log"></p>
+  <p id="res"></p>
+</section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let file = null;
+const drop = $("drop"), input = $("file");
+function pick(f){ file = f; drop.textContent = f ? f.name : "اضغط أو اسحب الفيديو هنا"; $("go").disabled = !f; }
+drop.onclick = () => input.click();
+input.onchange = () => pick(input.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("on"); };
+drop.ondragleave = () => drop.classList.remove("on");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("on"); pick(e.dataTransfer.files[0]); };
+
+$("go").onclick = async () => {
+  const q = new URLSearchParams({name: file.name});
+  for (const k of ["badtakes","silence","captions","sfx"]) if ($(k).checked) q.set(k, "1");
+  $("go").disabled = true; $("res").textContent = ""; $("log").textContent = "جارٍ الرفع...";
+  try {
+    const r = await fetch("/edit?" + q, {method: "POST", body: file});
+    if (!r.ok) throw new Error(await r.text());
+    const {id} = await r.json();
+    for (;;) {
+      await new Promise(s => setTimeout(s, 1000));
+      const j = await (await fetch("/job?id=" + id)).json();
+      $("log").textContent = j.log.join("\n");
+      if (j.status === "done") {
+        $("res").innerHTML = '<a class="dl" href="/download?id=' + id + '">تنزيل الفيديو</a><br><small>' + j.path + '</small>';
+        break;
+      }
+      if (j.status === "error") { $("res").textContent = "تعذّر: " + j.error; break; }
+    }
+  } catch (e) { $("res").textContent = "تعذّر: " + e.message; }
+  $("go").disabled = false;
+};
+</script>
+</body>
+</html>
