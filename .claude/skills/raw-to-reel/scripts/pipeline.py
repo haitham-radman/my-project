@@ -13,17 +13,19 @@ class Unavailable(Exception):
     """A requested edit needs something that is not installed or not allowed."""
 
 
-def transcribe(path, allow_download=False):
-    """Return [{start, end, text, words:[{start, end, word}]}] using a local faster-whisper."""
+def transcribe(path, allow_download=False, model="small"):
+    """Return [{start, end, text, words:[{start, end, word}]}] using a local faster-whisper.
+
+    `model` is a size name or a path to a local model folder (then nothing is downloaded)."""
     try:
         from faster_whisper import WhisperModel
     except ImportError:
         raise Unavailable("faster-whisper is not installed (ask the user before `pip install faster-whisper`)")
     try:
-        model = WhisperModel("small", local_files_only=not allow_download)
+        wm = WhisperModel(model, local_files_only=not allow_download)
     except Exception as e:
-        raise Unavailable(f"Whisper model not available locally; start the server with --allow-download ({e})")
-    segs, _ = model.transcribe(path, word_timestamps=True)
+        raise Unavailable(f"Whisper model {model!r} not available locally; pass --model <folder> or --allow-download ({e})")
+    segs, _ = wm.transcribe(path, word_timestamps=True)
     return [{"start": s.start, "end": s.end, "text": s.text.strip(),
              "words": [{"start": w.start, "end": w.end, "word": w.word.strip()} for w in s.words or []]}
             for s in segs]
@@ -118,7 +120,7 @@ def burn_captions(src, dst, ass_text):
         raise RuntimeError(r.stderr[-600:])
 
 
-def run_job(src, outdir, opts, log, allow_download=False):
+def run_job(src, outdir, opts, log, allow_download=False, model="small"):
     """Apply the chosen edits in order. Returns (final_path, edit_list). Never touches src."""
     os.makedirs(outdir, exist_ok=True)
     cur, edits, n = src, [], 0
@@ -131,7 +133,7 @@ def run_job(src, outdir, opts, log, allow_download=False):
     stitches = []
     if opts.get("badtakes"):
         log("transcribing to find bad takes")
-        segs, dropped = drop_bad_takes(transcribe(cur, allow_download))
+        segs, dropped = drop_bad_takes(transcribe(cur, allow_download, model))
         if dropped and segs:
             out = nxt()
             err = cut(cur, out, segs)
@@ -153,7 +155,7 @@ def run_job(src, outdir, opts, log, allow_download=False):
         log(f"silence removed: {total:.1f}s -> {duration(cur):.1f}s")
     if opts.get("captions"):
         log("transcribing for captions")
-        words = [w for s in transcribe(cur, allow_download) for w in s["words"]]
+        words = [w for s in transcribe(cur, allow_download, model) for w in s["words"]]
         if not words:
             raise Unavailable("no words recognised")
         out = nxt()

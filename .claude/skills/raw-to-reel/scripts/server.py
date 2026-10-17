@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Local web UI for Raw to Reel. Listens on 127.0.0.1 only.
 
-usage: server.py FOLDER [--port 8765] [--allow-download]
+usage: server.py FOLDER [--port 8765] [--model SIZE_OR_FOLDER] [--allow-download]
 FOLDER receives uploads and the `reel/` outputs. Originals are never modified.
 """
 import argparse
@@ -37,7 +37,7 @@ def unique(path):
     return p
 
 
-def make_handler(folder, allow_download, port):
+def make_handler(folder, allow_download, port, model="small"):
     allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
 
     class H(BaseHTTPRequestHandler):
@@ -118,7 +118,7 @@ def make_handler(folder, allow_download, port):
     def work(job, src, opts):
         try:
             outdir = os.path.join(folder, "reel", f"{os.path.splitext(os.path.basename(src))[0]}-{int(time.time())}")
-            job["path"], _ = pipeline.run_job(src, outdir, opts, job["log"].append, allow_download)
+            job["path"], _ = pipeline.run_job(src, outdir, opts, job["log"].append, allow_download, model)
             job["status"] = "done"
         except Exception as e:  # surfaced to the UI as a plain message
             job["status"], job["error"] = "error", str(e)
@@ -130,11 +130,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--model", default="small", help="Whisper size name or path to a local model folder")
     ap.add_argument("--allow-download", action="store_true", help="let faster-whisper download its model")
     a = ap.parse_args()
     folder = os.path.abspath(a.folder)
     os.makedirs(folder, exist_ok=True)
-    srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(folder, a.allow_download, a.port))
+    srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(folder, a.allow_download, a.port, a.model))
     print(f"Raw to Reel: http://localhost:{a.port}  (folder: {folder})", flush=True)
     srv.serve_forever()
 

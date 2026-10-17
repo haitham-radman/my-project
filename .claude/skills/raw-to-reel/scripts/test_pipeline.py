@@ -32,5 +32,25 @@ class PureHelpers(unittest.TestCase):
         self.assertIn("{\\k50}w0", ass)
 
 
+class ModelPath(unittest.TestCase):
+    def test_local_model_path_is_used_without_download(self):
+        import types
+        seen = {}
+
+        class Fake:
+            def __init__(self, model, local_files_only):
+                seen.update(model=model, local_only=local_files_only)
+
+            def transcribe(self, path, word_timestamps):
+                return [], None
+
+        sys.modules["faster_whisper"] = types.SimpleNamespace(WhisperModel=Fake)
+        try:
+            pipeline.transcribe("x.mp4", model="/models/small")
+        finally:
+            del sys.modules["faster_whisper"]
+        self.assertEqual(seen, {"model": "/models/small", "local_only": True})
+
+
 if __name__ == "__main__":
     unittest.main()
