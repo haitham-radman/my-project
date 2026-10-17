@@ -4,7 +4,7 @@ Three mods for Claude Code, built from the "Mods" demo in an @aipro.arabi TikTok
 
 | Mod | What it does |
 | --- | --- |
-| `token-weather` | Band above the prompt showing how full the context window is. |
+| `token-weather` | Band above the prompt showing how full the context window is; `/token-weather` prints the same reading as text. |
 | `blast-radius` | Denies a destructive Bash command (recursive `rm`, `git clean`, `git reset --hard`, `find` with the delete flag, ...) the first time, so Claude lists what it would remove and asks you; the same command is allowed when run again. |
 | `replay-theater` | Records every file edit of the last turn and shows a running count in the status line; `/replay` lists them in order. |
 
