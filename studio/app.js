@@ -912,6 +912,7 @@
       const s = section('الصوت');
       rng(s, 'مستوى الصوت %', { min: 0, max: 200, get: () => c.vol * 100, set: (v) => { c.vol = v / 100; } });
       box.append(s);
+      box.append(captionSection(c));
     }
 
     if (kind === 'video' || kind === 'image') {
@@ -926,6 +927,156 @@
       F('تدرج رمادي', 'gray', 0, 100); F('بني قديم', 'sepia', 0, 100); F('تدوير اللون', 'hue', -180, 180); F('ضبابية', 'blur', 0, 40);
       box.append(s);
     }
+  }
+
+
+  /* ---------- auto captions (Whisper in a worker) ---------- */
+  const CAP = { lang: 'auto', task: 'transcribe', model: 'onnx-community/whisper-tiny', words: 6, style: 2, anim: 'none', busy: false, msg: '', pct: 0 };
+  const CAP_LANGS = [['auto', 'تلقائي'], ['ar', 'العربية'], ['en', 'English'], ['fr', 'Français'], ['es', 'Español'], ['de', 'Deutsch'], ['tr', 'Türkçe'], ['ru', 'Русский'], ['hi', 'हिन्दी'], ['ur', 'اردو'], ['fa', 'فارسی']];
+  const CAP_MODELS = [['onnx-community/whisper-tiny', 'سريع (حوالي 40 ميجابايت)'], ['onnx-community/whisper-base', 'متوازن (حوالي 80 ميجابايت)'], ['onnx-community/whisper-small', 'دقيق (حوالي 250 ميجابايت)']];
+  const CAP_STYLES = [2, 3, 4, 1];
+  let asrWorker = null, asrUrl = 'captions-worker.js', asrConsent = false;
+
+  async function clipAudio(c) {
+    const m = mediaOf(c);
+    const raw = await (await fetch(m.url)).arrayBuffer();
+    const ab = await new OfflineAudioContext(1, 1, 16000).decodeAudioData(raw);
+    const a0 = Math.floor(c.in * 16000), a1 = Math.min(ab.length, Math.ceil((c.in + c.dur * c.speed) * 16000));
+    const out = new Float32Array(Math.max(0, a1 - a0));
+    for (let ch = 0; ch < ab.numberOfChannels; ch++) {
+      const d = ab.getChannelData(ch);
+      for (let i = 0; i < out.length; i++) out[i] += d[a0 + i] / ab.numberOfChannels;
+    }
+    return out;
+  }
+
+  function runAsr(audio, opts, onMsg) {
+    return new Promise((res, rej) => {
+      if (!asrWorker) asrWorker = new Worker(asrUrl, { type: 'module' });
+      const w = asrWorker;
+      w.onmessage = (e) => {
+        if (e.data.type === 'result') res(e.data.chunks);
+        else if (e.data.type === 'error') rej(new Error(e.data.message));
+        else onMsg(e.data);
+      };
+      w.onerror = (e) => rej(new Error(e.message || 'تعذّر تشغيل محرك التفريغ'));
+      w.postMessage({ audio, ...opts }, [audio.buffer]);
+    });
+  }
+
+  // Whisper segments -> short caption lines on the timeline
+  function toLines(chunks, c, words) {
+    const lines = [], srcLen = c.dur * c.speed;
+    for (const ch of chunks) {
+      const text = (ch.text || '').trim(); if (!text) continue;
+      let [a, b] = ch.timestamp || [0, null];
+      a = a || 0; if (b == null || b <= a) b = Math.min(a + 2.5, srcLen);
+      const ws = text.split(/\s+/), n = Math.max(1, Math.ceil(ws.length / words)), per = Math.ceil(ws.length / n);
+      const groups = [];
+      for (let i = 0; i < ws.length; i += per) groups.push(ws.slice(i, i + per).join(' '));
+      const total = groups.reduce((s, x) => s + x.length, 0);
+      let t = a;
+      for (const gt of groups) { const d = (b - a) * gt.length / total; lines.push({ s: t, e: t + d, text: gt }); t += d; }
+    }
+    const end = c.start + c.dur;
+    const out = lines.map((l) => ({ s: c.start + l.s / c.speed, e: Math.min(end, c.start + l.e / c.speed), text: l.text })).filter((l) => l.s < end);
+    out.forEach((l, i) => {
+      if (l.e - l.s < 0.3) l.e = Math.min(end, l.s + 0.3);
+      if (out[i + 1] && l.e > out[i + 1].s) l.e = Math.max(l.s + 0.1, out[i + 1].s);
+    });
+    return out;
+  }
+
+  function placeCaptions(c, lines) {
+    S.clips = S.clips.filter((o) => o.capOf !== c.id);
+    const lo = lines[0].s, hi = lines[lines.length - 1].e;
+    const busy = (id) => S.clips.some((o) => o.track === id && o.start < hi && o.start + o.dur > lo);
+    const track = !busy('T1') ? 'T1' : !busy('T2') ? 'T2' : 'T1';
+    const P = TEXT_PRESETS[CAP.style], k = Math.min(1, S.res[0] / S.res[1] * 1.2);
+    for (const l of lines) {
+      const nc = newClip({
+        track, start: l.s, dur: l.e - l.s, y: P.y, capOf: c.id,
+        text: newText({ text: l.text, size: Math.round(P.size * k), bold: P.bold, stroke: P.stroke, bg: P.bg, shadow: P.shadow, anim: CAP.anim }),
+      });
+      S.clips.push(nc);
+    }
+  }
+
+  function setCap(msg, pct) {
+    CAP.msg = msg; if (pct != null) CAP.pct = pct;
+    const m = $('#capMsg'), b = $('#capBar');
+    if (m) m.textContent = msg; if (b) b.style.width = (CAP.pct * 100).toFixed(0) + '%';
+  }
+
+  async function autoCaption(c) {
+    if (CAP.busy) return;
+    const hasAudio = mediaOf(c) && mediaOf(c).kind !== 'image';
+    if (!hasAudio) return;
+    if (!asrConsent) {
+      const mb = CAP_MODELS.find((x) => x[0] === CAP.model)[1];
+      if (!confirm(`سيُحمَّل محرك Whisper (${mb}) من jsdelivr وhuggingface.co مرة واحدة ثم يُحفظ في المتصفح. التفريغ يتم على جهازك ولا يُرفع صوتك. متابعة؟`)) return;
+      asrConsent = true;
+    }
+    CAP.busy = true; renderInspector(); setCap('قراءة الصوت…', 0);
+    try {
+      const audio = await clipAudio(c);
+      if (audio.length < 1600) throw new Error('لا يوجد صوت في هذا المقطع');
+      const chunks = await runAsr(audio, { language: CAP.lang, task: CAP.task, model: CAP.model }, (d) => {
+        if (d.type === 'load') setCap(`تحميل النموذج… ${(d.pct * 100).toFixed(0)}%`, d.pct);
+        else if (d.type === 'run') setCap('جارٍ تفريغ الكلام…', 1);
+      });
+      const lines = toLines(chunks, c, CAP.words);
+      if (!lines.length) throw new Error('لم يُكتشف كلام في المقطع');
+      placeCaptions(c, lines);
+      S.sel = c.id; commit(); toast(`تمت إضافة ${lines.length} سطر كابشن`);
+    } catch (err) {
+      if (asrWorker) { asrWorker.terminate(); asrWorker = null; }
+      toast('تعذّر إنشاء الكابشن: ' + err.message);
+    } finally {
+      CAP.busy = false; CAP.msg = ''; CAP.pct = 0; renderAll();
+    }
+  }
+
+  function cancelCaption() {
+    if (asrWorker) { asrWorker.terminate(); asrWorker = null; }
+    // terminate() never settles the pending promise; unlock the UI directly
+    CAP.busy = false; CAP.msg = ''; renderInspector(); toast('أُلغي إنشاء الكابشن');
+  }
+
+  const srtTime = (t) => {
+    const ms = Math.round(t * 1000), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+    return `${pad2(h)}:${pad2(m)}:${pad2(s)},${String(ms % 1000).padStart(3, '0')}`;
+  };
+  function srtFor(c) {
+    return S.clips.filter((o) => o.capOf === c.id).sort((a, b) => a.start - b.start)
+      .map((o, i) => `${i + 1}\n${srtTime(o.start)} --> ${srtTime(o.start + o.dur)}\n${o.text.text}\n`).join('\n');
+  }
+
+  function captionSection(c) {
+    const s = section('كابشن تلقائي');
+    const have = S.clips.filter((o) => o.capOf === c.id).length;
+    selRow(s, 'اللغة', CAP_LANGS, () => CAP.lang, (v) => { CAP.lang = v; });
+    selRow(s, 'المهمة', [['transcribe', 'تفريغ بنفس اللغة'], ['translate', 'ترجمة إلى الإنجليزية']], () => CAP.task, (v) => { CAP.task = v; });
+    selRow(s, 'الدقة', CAP_MODELS, () => CAP.model, (v) => { CAP.model = v; });
+    selRow(s, 'النمط', CAP_STYLES.map((i) => [String(i), TEXT_PRESETS[i].name]), () => String(CAP.style), (v) => { CAP.style = +v; });
+    selRow(s, 'الحركة', [['none', 'بدون'], ['fade', 'ظهور تدريجي'], ['slide', 'انزلاق'], ['pop', 'تكبير نابض']], () => CAP.anim, (v) => { CAP.anim = v; });
+    const w = el('input', { type: 'number', min: 2, max: 14, step: 1, value: CAP.words, 'aria-label': 'كلمات في السطر' });
+    w.addEventListener('change', () => { CAP.words = clamp(Math.round(+w.value) || 6, 2, 14); w.value = CAP.words; });
+    s.append(el('div', { class: 'row two' }, el('label', { textContent: 'كلمات/سطر' }), w));
+    const go = el('button', { class: 'primary wide', textContent: CAP.busy ? 'جارٍ العمل…' : have ? 'إعادة إنشاء الكابشن' : 'إنشاء الكابشن', disabled: CAP.busy, onclick: () => autoCaption(c) });
+    s.append(go);
+    if (CAP.busy) {
+      s.append(el('div', { class: 'bar', style: 'margin-top:10px' }, el('i', { id: 'capBar' })), el('p', { id: 'capMsg', class: 'muted small' }),
+        el('button', { class: 'ghost wide', textContent: 'إلغاء', onclick: cancelCaption }));
+      setCap(CAP.msg, CAP.pct);
+    } else if (have) {
+      s.append(el('button', { class: 'ghost wide', textContent: `تنزيل SRT (${have} سطر)`, onclick: () => {
+        const a = el('a', { href: URL.createObjectURL(new Blob(['﻿' + srtFor(c)], { type: 'text/plain' })), download: (mediaOf(c).name.replace(/\.[^.]+$/, '') || 'captions') + '.srt' });
+        a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      } }), el('button', { class: 'ghost wide', textContent: 'حذف الكابشن', onclick: () => { S.clips = S.clips.filter((o) => o.capOf !== c.id); commit(); renderAll(); } }));
+    }
+    s.append(el('p', { class: 'muted small', textContent: 'يعمل التفريغ على جهازك. يُنشئ أسطرًا نصية قابلة للتعديل على مسار النص.' }));
+    return s;
   }
 
   /* ---------- export ---------- */
@@ -1086,7 +1237,7 @@
     });
 
     // test / debugging hook
-    window.__studio = { S, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
+    window.__studio = { S, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
   }
   init();
 })();
