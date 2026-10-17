@@ -1,6 +1,6 @@
 # my-project
 
-A library of Claude Code skills, plus the hooks and agents that maintain it. There is no application code.
+A library of Claude Code skills, plus the hooks and agents that maintain it. The only application code is the static `studio/` video editor.
 
 ## Layout
 
@@ -9,6 +9,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - `.claude/hooks/session-start.sh` — installs Node 24 via nvm in cloud sessions.
 - `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`; tests in `.claude/hooks/test_check_skill_frontmatter.py`.
 - `.claude/settings.json` — registers both hooks.
+- `studio/` — standalone browser video editor (static HTML/CSS/JS, no build). See `studio/README.md`.
 
 ## Adding or updating a skill
 
@@ -57,6 +58,8 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 ## Tests
 
 Hook tests: `python3 -m unittest discover -s .claude/hooks` (5 tests, all pass).
+
+Studio decoder tests (Node's built-in runner, no dependencies): `node --test "studio/test/*.test.js"` (50 tests, all pass). `demux.test.js` and `reader.test.js` run in plain Node; `decode.test.js` drives headless Chromium through Playwright and skips itself when Playwright or a browser is missing (H.264 fixtures also skip where the browser cannot decode H.264). `studio/test/make-fixtures.js` regenerates `studio/test/fixtures/` and needs ffmpeg and ffprobe.
 
 The only bundled skill suite is `ui-ux-pro-max`:
 

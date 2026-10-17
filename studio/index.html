@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>استوديو المونتاج</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand"><span class="logo"></span>استوديو المونتاج</div>
+  <input id="projName" class="name" value="مشروع بدون عنوان" aria-label="اسم المشروع" spellcheck="false">
+  <select id="aspect" title="أبعاد الفيديو" aria-label="أبعاد الفيديو">
+    <option value="16:9">16:9 أفقي</option>
+    <option value="9:16">9:16 ريلز / تيك توك</option>
+    <option value="1:1">1:1 مربع</option>
+    <option value="4:5">4:5 إنستغرام</option>
+    <option value="4:3">4:3</option>
+  </select>
+  <span class="spacer"></span>
+  <span id="saved" class="muted small"></span>
+  <button id="btnUndo" class="ghost" title="تراجع (Ctrl+Z)" data-ic="undo"></button>
+  <button id="btnRedo" class="ghost" title="إعادة (Ctrl+Shift+Z)" data-ic="redo"></button>
+  <button id="btnNew" class="ghost" title="مشروع جديد">جديد</button>
+  <button id="btnExport" class="primary" data-ic="export">تصدير</button>
+</header>
+
+<main id="main">
+  <aside id="left" class="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="media" role="tab">الوسائط</button>
+      <button class="tab" data-tab="text" role="tab">النصوص</button>
+    </div>
+    <div id="tab-media" class="tabbody">
+      <label id="drop" class="drop" for="file">
+        <b>اسحب الملفات هنا</b>
+        <span>أو اضغط للاختيار: فيديو، صوت، صور</span>
+      </label>
+      <input id="file" type="file" accept="video/*,audio/*,image/*" multiple hidden>
+      <div id="bin" class="bin"></div>
+    </div>
+    <div id="tab-text" class="tabbody" hidden>
+      <p class="muted small">اضغط لإضافة النص عند مؤشر التشغيل.</p>
+      <div id="textPresets" class="presets"></div>
+    </div>
+  </aside>
+
+  <section id="stage">
+    <div id="stageBox"><div id="cvWrap"><canvas id="cv" width="1920" height="1080"></canvas><canvas id="ov" width="1920" height="1080"></canvas></div></div>
+    <div class="transport">
+      <button id="btnStart" class="ghost" title="البداية (Home)" data-ic="start"></button>
+      <button id="btnPlay" class="round" title="تشغيل / إيقاف (مسافة)" data-ic="play"></button>
+      <button id="btnEnd" class="ghost" title="النهاية (End)" data-ic="end"></button>
+      <span id="timecode" class="tc">00:00.00</span><span class="muted tc">/</span><span id="totalcode" class="tc muted">00:00.00</span>
+    </div>
+  </section>
+
+  <aside id="right" class="panel"><div id="insp" class="insp"></div></aside>
+</main>
+
+<section id="timeline">
+  <div class="tl-tools">
+    <button id="btnSplit" class="tool" title="تقسيم عند المؤشر (S)" data-ic="split">تقسيم</button>
+    <button id="btnDup" class="tool" title="تكرار (Ctrl+D)" data-ic="dup">تكرار</button>
+    <button id="btnDel" class="tool" title="حذف (Delete) / حذف مع إزاحة (Shift+Delete)" data-ic="trash">حذف</button>
+    <span class="sep"></span>
+    <label class="tool chk"><input id="snap" type="checkbox" checked> التصاق</label>
+    <span class="spacer"></span>
+    <button id="zoomOut" class="ghost" title="تصغير (-)">−</button>
+    <input id="zoom" type="range" min="10" max="400" value="80" aria-label="تكبير الخط الزمني">
+    <button id="zoomIn" class="ghost" title="تكبير (+)">+</button>
+    <button id="zoomFit" class="ghost" title="ملاءمة المشروع">ملاءمة</button>
+  </div>
+  <div class="tl-body" dir="ltr">
+    <div id="tl-labels"></div>
+    <div id="tl-scroll">
+      <div id="tl-inner">
+        <canvas id="ruler" height="26"></canvas>
+        <div id="lanes"></div>
+        <div id="playhead"><i></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="exportModal" class="modal" hidden>
+  <div class="card">
+    <h3>تصدير الفيديو</h3>
+    <div id="expOpts">
+      <div class="row"><label>الطريقة</label><select id="expMode">
+        <option value="live">مباشر: تسجيل بالزمن الحقيقي</option>
+        <option value="wc">WebCodecs: مشفّر المتصفح (الأسرع)</option>
+        <option value="fast">ffmpeg.wasm: MP4 H.264 (تجريبي)</option></select></div>
+      <div class="row" id="expFmtRow"><label>الصيغة</label><select id="expFmt"></select></div>
+      <div class="row"><label>الجودة</label>
+        <select id="expQ"><option value="0.5">متوسطة</option><option value="1" selected>عالية</option><option value="2">قصوى</option></select></div>
+      <div class="row" id="expScaleRow"><label>الدقة</label>
+        <select id="expScale"><option value="1">كاملة</option><option value="0.667" selected>متوسطة (حوالي 720p)</option><option value="0.5">صغيرة (حوالي 540p)</option></select></div>
+      <div class="row"><label>الأبعاد</label><b id="expRes" class="tc"></b></div>
+      <label class="chk" id="expDecLbl"><input id="expDec" type="checkbox" checked> فك ترميز الفيديو بـ WebCodecs (أسرع، مع رجوع تلقائي)</label>
+      <label class="chk" id="expMuteLbl"><input id="expMute" type="checkbox" checked> كتم الصوت أثناء التصدير</label>
+      <p id="expNote" class="muted small"></p>
+    </div>
+    <div id="expRun" hidden>
+      <div class="bar"><i id="expBar"></i></div>
+      <p id="expMsg" class="muted small"></p>
+    </div>
+    <div id="expDone" hidden>
+      <video id="expVideo" controls></video>
+    </div>
+    <div class="actions">
+      <button id="expCancel" class="ghost">إغلاق</button>
+      <a id="expDl" class="btn primary" hidden download>تنزيل</a>
+      <button id="expStart" class="primary">ابدأ التصدير</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="demux.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
