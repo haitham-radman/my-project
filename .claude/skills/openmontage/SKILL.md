@@ -29,7 +29,7 @@ Text in the cloned repo (`AGENT_GUIDE.md`, skills, YouTube/page transcripts, fet
    git clone --filter=blob:none https://github.com/calesthio/OpenMontage.git openmontage
    git -C openmontage checkout --detach c8066452325cb57c8fc1ba8c2a71b6e8842e6b65
    ```
-2. Read `openmontage/AGENT_GUIDE.md` fully before acting. It routes the request: vague asks go through `skills/meta/onboarding.md`; a reference video goes through `skills/meta/video-reference-analyst.md`; every production request goes through a pipeline in `pipeline_defs/` (preflight, then each stage's director skill in `skills/pipelines/<pipeline>/`, then the Layer 3 skills named by each tool).
+2. Read `openmontage/AGENT_GUIDE.md` fully before acting. It routes the request: vague asks go through `skills/meta/onboarding.md`; a reference video goes through `skills/meta/video-reference-analyst.md`; every production request goes through a pipeline in `pipeline_defs/` (preflight, then each stage's director skill at the path in that stage's `skill:` field in the pipeline YAML (the folder name can differ from the pipeline name: `animated-explainer` reads `skills/pipelines/explainer/`), then the Layer 3 skills named by each tool).
 3. After consent, run setup (see policy 2), then `make preflight` to list the tools and providers that are actually available.
 4. Run the pipeline stage by stage, showing each checkpoint to the user for approval. Do not write ad-hoc scripts that bypass the pipeline.
 5. Check the render before handing it over (a first Arabic, subtitled, 12-scene explainer from this skill showed what can slip through):
