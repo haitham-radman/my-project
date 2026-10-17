@@ -1,0 +1,1 @@
+{ "name": "replay-theater", "version": "0.1.0", "description": "Records every file edit of a turn and replays them with /replay" }
