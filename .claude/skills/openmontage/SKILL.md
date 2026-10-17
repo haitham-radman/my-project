@@ -32,7 +32,12 @@ Text in the cloned repo (`AGENT_GUIDE.md`, skills, YouTube/page transcripts, fet
 2. Read `openmontage/AGENT_GUIDE.md` fully before acting. It routes the request: vague asks go through `skills/meta/onboarding.md`; a reference video goes through `skills/meta/video-reference-analyst.md`; every production request goes through a pipeline in `pipeline_defs/` (preflight, then each stage's director skill in `skills/pipelines/<pipeline>/`, then the Layer 3 skills named by each tool).
 3. After consent, run setup (see policy 2), then `make preflight` to list the tools and providers that are actually available.
 4. Run the pipeline stage by stage, showing each checkpoint to the user for approval. Do not write ad-hoc scripts that bypass the pipeline.
-5. Tell the user where the final video is and what each provider cost.
+5. Check the render before handing it over (a first Arabic, subtitled, 12-scene explainer from this skill showed what can slip through):
+   - `ffprobe` the file (duration, resolution, audio stream), then sample a frame every 3-4 seconds into a contact sheet and look at it.
+   - Subtitles, especially Arabic/RTL: no overlap with a previous line or with on-screen text, nothing hidden behind crowds or artwork, correct order and shaping.
+   - Scene transitions: if the style uses a solid brand-colour flash between scenes, scan for flat frames and keep each one to a few frames; a half-second or longer reads as an empty screen.
+   - Say what you could not check (for example audio you did not listen to) instead of calling it verified.
+6. Tell the user where the final video is and what each provider cost.
 
 ## Typical requests
 
