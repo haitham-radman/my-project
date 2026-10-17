@@ -1,6 +1,6 @@
 # my-project
 
-A library of Claude Code skills, plus the hooks and agents that maintain it. There is no application code.
+A library of Claude Code skills, plus the hooks and agents that maintain it. The only application code is the static `studio/` video editor.
 
 ## Layout
 
@@ -9,6 +9,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - `.claude/hooks/session-start.sh` — installs Node 24 via nvm in cloud sessions.
 - `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`; tests in `.claude/hooks/test_check_skill_frontmatter.py`.
 - `.claude/settings.json` — registers both hooks.
+- `studio/` — standalone browser video editor (static HTML/CSS/JS, no build). See `studio/README.md`.
 
 ## Adding or updating a skill
 
