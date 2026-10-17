@@ -15,7 +15,9 @@ export const register: Register = on => {
   })
 
   on('prompt.submit', ($, e, next) => {
-    edits = []
+    if (e.command === undefined) {
+      edits = []
+    }
 
     return next(e)
   })
