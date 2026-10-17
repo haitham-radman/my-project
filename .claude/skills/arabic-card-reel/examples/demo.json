@@ -1,0 +1,19 @@
+{
+  "brand": "اسمك",
+  "kicker": "AI TOOLS · REAL RESULTS",
+  "scenes": [
+    {"kind": "hook", "seconds": 7, "icon": "AI", "title": "تستخدمه *للسوالف* بس؟", "subtitle": "خلّه ~مدربك~ الشخصي!", "pill": "أقوى الأوامر"},
+    {"seconds": 6, "tag": {"text": "٠١ • الإنتاجية", "color": "teal"}, "title": "خطة *سنة*",
+     "blocks": [{"type": "quote", "text": "«أبي خطة سنة توصلني لهدفي أسرع، بالاختصارات والأتمتة»"}]},
+    {"seconds": 6, "tag": {"text": "٠٢ • التعلم", "color": "teal"}, "title": "أتقن أي ~مهارة~",
+     "blocks": [{"type": "stat", "big": "٩٠", "text": "يوم • جدول أسبوعي ومراجعة"}, {"type": "note", "text": "«أبي أتقن [المهارة] في ٩٠ يوم»"}]},
+    {"seconds": 8, "title": "مرشدك *الاستراتيجي*",
+     "blocks": [{"type": "mindmap", "root": "٠٣ • التفكير", "branches": [
+        {"text": "كل يوم", "color": "teal"}, {"text": "طريقة تفكير جديدة", "color": "orange"}, {"text": "طبقها على قراراتك", "color": "white"}]}]},
+    {"seconds": 7, "tag": {"text": "٠٤", "color": "orange"}, "title": "~خطة~ حياتك",
+     "blocks": [{"type": "checklist", "items": [{"text": "تناسب قيمك", "mark": "check"}, {"text": "ومهاراتك وطموحك", "mark": "check"}, {"text": "بعيد عن التشتت", "mark": "cross"}]}]},
+    {"seconds": 5, "tag": {"text": "السر", "color": "orange"}, "title": "رد على *مقاسك*",
+     "blocks": [{"type": "chips", "items": ["عطه تفاصيلك", "خلّه يسألك قبل ما يجاوب"], "color": "orange"}]},
+    {"kind": "outro", "seconds": 5, "title": "تابع *اسمك* AI", "subtitle": "اكتب «مدرب» في التعليقات", "button": "+ تابع", "done": "تمت المتابعة"}
+  ]
+}
