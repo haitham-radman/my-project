@@ -18,7 +18,7 @@ Use Chrome or Edge (needs `MediaRecorder`, `AudioContext`, canvas `filter`).
 - Text/captions: Arabic (RTL) and Latin, fonts, outline, shadow, background box, animations (fade, slide, pop, typewriter).
 - Auto captions: select a video/audio clip, then "كابشن تلقائي". Whisper (tiny/base/small) runs in a Web Worker via transformers.js, with language choice, transcribe or translate-to-English, caption style and animation, and SRT download. Lines become editable text clips.
 - Aspect presets: 16:9, 9:16, 1:1, 4:5, 4:3 (1080p-class output).
-- Export, three modes: WebCodecs (browser encoder, H.264 -> MP4 or VP9 -> WebM, muxed with the mixed audio by ffmpeg.wasm without re-encoding), live recording (MediaRecorder; H.264 MP4 where supported, else WebM), or the experimental ffmpeg.wasm x264 mode (each frame rendered deterministically, mixed audio rendered offline, x264 + AAC in an MP4; resolution full / ~720p / ~540p; cancellable).
+- Export, three modes: WebCodecs (browser encoder, H.264 -> MP4 or VP9 -> WebM; audio encoded with `AudioEncoder` (AAC, else Opus) and both streams muxed in JS by `mp4-muxer` / `webm-muxer`, about 140 KB loaded from jsDelivr with pinned versions and SRI hashes; falls back to ffmpeg.wasm for the mux if those can't load), live recording (MediaRecorder; H.264 MP4 where supported, else WebM), or the experimental ffmpeg.wasm x264 mode (each frame rendered deterministically, mixed audio rendered offline, x264 + AAC in an MP4; resolution full / ~720p / ~540p; cancellable).
 - WebCodecs decoding for the two non-live export modes (checkbox, on by default): `demux.js` parses MP4/MOV and WebM/MKV itself and feeds `VideoDecoder` sequentially instead of seeking a `<video>` per frame. Anything it cannot handle (fragmented MP4, rotated video, HEVC/AV1, lacing, a codec the browser can't decode) silently falls back to seeking, per clip.
 - Autosave: project in `localStorage`, media in IndexedDB (restored on reload).
 
@@ -48,3 +48,7 @@ node --test "studio/test/*.test.js"
 - `reader.test.js`: the sequential frame reader against a fake `VideoDecoder` that reorders and delays output (frame choice, key-frame restarts, bounded open frames, error propagation).
 - `decode.test.js`: the same reader against the real `VideoDecoder` in headless Chromium (skips without Playwright or a browser).
 - Fixtures (160x90, 30 frames, frame N is flat gray 20 + 7*N so decoded pixels identify the frame) are committed; `node studio/test/make-fixtures.js` regenerates them.
+
+## Hosts that restrict the page
+
+Confirmation questions use an in-page dialog (no `window.confirm`), media is read from the `File` objects instead of `fetch(blob:)`, and the download link goes through the host's `claude.downloads.save` when a `window.claude` is present. Setting `window.STUDIO_LIMITED = true` before `app.js` hides what needs third-party network access: the ffmpeg.wasm export mode and automatic captions.

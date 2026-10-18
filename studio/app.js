@@ -28,6 +28,24 @@
     return e;
   }
 
+  // Set by hosts that block network access to third-party files (e.g. an embedded viewer): hides what needs it.
+  const LIMITED = !!window.STUDIO_LIMITED;
+
+  /** In-page confirmation (window.confirm is unavailable in some hosts). Resolves true or false. */
+  function ask(message, ok = 'متابعة') {
+    return new Promise((resolve) => {
+      const done = (v) => { document.removeEventListener('keydown', onKey, true); box.remove(); resolve(v); };
+      const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); done(false); } };
+      const okBtn = el('button', { class: 'primary', textContent: ok, onclick: () => done(true) });
+      const box = el('div', { class: 'modal', role: 'alertdialog', 'aria-modal': 'true' },
+        el('div', { class: 'card' },
+          el('p', { class: 'askmsg', textContent: message }),
+          el('div', { class: 'actions' }, el('button', { class: 'ghost', textContent: 'إلغاء', onclick: () => done(false) }), okBtn)));
+      document.addEventListener('keydown', onKey, true);
+      document.body.append(box); okBtn.focus();
+    });
+  }
+
   const ICONS = {
     play: '<path d="M7 4.5v15l13-7.5z"/>',
     pause: '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>',
@@ -211,6 +229,8 @@
     } catch { /* video without decodable audio */ }
   }
 
+  const blobOf = async (m) => m.file || (await fetch(m.url)).blob();
+
   async function importOne(file, id = uid(), persist = true) {
     const kind = file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : file.type.startsWith('image') ? 'image' : null;
     if (!kind) throw new Error('unsupported');
@@ -314,8 +334,8 @@
     S.clips.push(b); resolveOverlap(b); S.sel = b.id; commit(); renderAll();
   }
 
-  function removeMedia(id) {
-    if (S.clips.some((c) => c.media === id) && !confirm('هذا الملف مستخدم في المشروع. سيُحذف معه كل مقاطعه. متابعة؟')) return;
+  async function removeMedia(id) {
+    if (S.clips.some((c) => c.media === id) && !(await ask('هذا الملف مستخدم في المشروع. سيُحذف معه كل مقاطعه. متابعة؟', 'حذف'))) return;
     S.clips = S.clips.filter((c) => c.media !== id);
     const m = S.media.get(id); if (m) URL.revokeObjectURL(m.url);
     S.media.delete(id); idbDel(id);
@@ -941,7 +961,7 @@
 
   async function clipAudio(c) {
     const m = mediaOf(c);
-    const raw = await (await fetch(m.url)).arrayBuffer();
+    const raw = await (await blobOf(m)).arrayBuffer();
     const ab = await new OfflineAudioContext(1, 1, 16000).decodeAudioData(raw);
     const a0 = Math.floor(c.in * 16000), a1 = Math.min(ab.length, Math.ceil((c.in + c.dur * c.speed) * 16000));
     const out = new Float32Array(Math.max(0, a1 - a0));
@@ -1016,7 +1036,7 @@
     if (!hasAudio) return;
     if (!asrConsent) {
       const mb = CAP_MODELS.find((x) => x[0] === CAP.model)[1];
-      if (!confirm(`سيُحمَّل محرك Whisper (${mb}) من jsdelivr وhuggingface.co مرة واحدة ثم يُحفظ في المتصفح. التفريغ يتم على جهازك ولا يُرفع صوتك. متابعة؟`)) return;
+      if (!(await ask(`سيُحمَّل محرك Whisper (${mb}) من jsdelivr وhuggingface.co مرة واحدة ثم يُحفظ في المتصفح. التفريغ يتم على جهازك ولا يُرفع صوتك. متابعة؟`))) return;
       asrConsent = true;
     }
     CAP.busy = true; renderInspector(); setCap('قراءة الصوت…', 0);
@@ -1056,6 +1076,7 @@
 
   function captionSection(c) {
     const s = section('كابشن تلقائي');
+    if (LIMITED) { s.append(el('p', { class: 'muted small', textContent: 'غير متاح في هذا العرض: يحتاج تحميل نموذج التفريغ من الإنترنت. استخدم النسخة المحلية للكابشن التلقائي.' })); return s; }
     const have = S.clips.filter((o) => o.capOf === c.id).length;
     selRow(s, 'اللغة', CAP_LANGS, () => CAP.lang, (v) => { CAP.lang = v; });
     selRow(s, 'المهمة', [['transcribe', 'تفريغ بنفس اللغة'], ['translate', 'ترجمة إلى الإنجليزية']], () => CAP.task, (v) => { CAP.task = v; });
@@ -1096,9 +1117,10 @@
     const sel = $('#expFmt'); sel.innerHTML = '';
     const ok = MIMES.filter(([, m]) => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
     ok.forEach(([n, m, ext]) => sel.append(el('option', { value: m, textContent: n, 'data-ext': ext })));
+    $('#expMode').querySelector('[value=fast]').hidden = LIMITED;
     $('#expMode').querySelector('[value=live]').disabled = !ok.length;
     $('#expMode').querySelector('[value=wc]').disabled = !window.VideoEncoder;
-    if (!ok.length) $('#expMode').value = window.VideoEncoder ? 'wc' : 'fast';
+    if (!ok.length) $('#expMode').value = window.VideoEncoder ? 'wc' : (LIMITED ? 'live' : 'fast');
     $('#expRes').textContent = `${S.res[0]} × ${S.res[1]} · ${FPS} fps`;
     updateExpMode();
     showExport('opts'); $('#exportModal').hidden = false;
@@ -1133,6 +1155,7 @@
       doneUrl = URL.createObjectURL(blob);
       $('#expVideo').src = doneUrl;
       const dl = $('#expDl'); dl.href = doneUrl; dl.download = (S.name.trim() || 'video') + '.' + ext;
+      lastResult = { blob, name: dl.download };
       showExport('done'); toast('اكتمل التصدير');
     };
     rec.start(500);
@@ -1200,14 +1223,14 @@
     if (decodeCache.has(m.id)) return decodeCache.get(m.id);
     let buf = null;
     try {
-      const raw = await (await fetch(m.url)).arrayBuffer();
+      const raw = await (await blobOf(m)).arrayBuffer();
       buf = await new OfflineAudioContext(2, 1, 44100).decodeAudioData(raw);
     } catch { /* no audio track */ }
     decodeCache.set(m.id, buf); return buf;
   }
 
-  async function mixAudio(total) {
-    const SR = 44100, ctx = new OfflineAudioContext(2, Math.max(1, Math.ceil(total * SR)), SR);
+  async function mixAudio(total, SR = 44100) {
+    const ctx = new OfflineAudioContext(2, Math.max(1, Math.ceil(total * SR)), SR);
     for (const c of S.clips) {
       const m = mediaOf(c);
       if (!m || m.kind === 'image' || S.off[c.track]) continue;
@@ -1308,7 +1331,7 @@
     say('تجهيز فك الترميز…', 0.03);
     for (const c of vids) {
       const m = mediaOf(c);
-      if (!demuxCache.has(m.id)) demuxCache.set(m.id, Demux.open(m.file || await (await fetch(m.url)).blob()));
+      if (!demuxCache.has(m.id)) demuxCache.set(m.id, Demux.open(await blobOf(m)));
       const tr = await demuxCache.get(m.id); if (!tr) continue;
       if (!m.colorChecked) { m.colorChecked = true; await calibrateColor(m, c, tr); }
       const r = new Demux.Reader(tr);
@@ -1319,11 +1342,11 @@
   function closeReaders() { for (const r of dsrc.values()) r.close(); dsrc.clear(); for (const f of wcFrames.values()) { try { f.close(); } catch { /* already closed */ } } wcFrames.clear(); }
 
   // Candidate WebCodecs configs, best first: H.264 (-> MP4) then VP9 (-> WebM).
-  async function pickWcConfig(w, h, bitrate) {
+  async function pickWcConfig(w, h, bitrate, annexb = true) {
     if (!window.VideoEncoder) return null;
     const base = { width: w, height: h, bitrate: Math.round(bitrate), framerate: FPS, latencyMode: 'quality' };
     const cands = [
-      ...['avc1.640028', 'avc1.4d0028', 'avc1.42001f'].map((codec) => ({ kind: 'h264', cfg: { ...base, codec, avc: { format: 'annexb' } } })),
+      ...['avc1.640028', 'avc1.4d0028', 'avc1.42001f'].map((codec) => ({ kind: 'h264', cfg: { ...base, codec, avc: { format: annexb ? 'annexb' : 'avc' } } })),
       { kind: 'vp9', cfg: { ...base, codec: 'vp09.00.40.08' } },
     ];
     for (const c of cands) {
@@ -1342,9 +1365,72 @@
     return out;
   }
 
+  // Small JS muxers (MP4 / WebM) let WebCodecs export finish without downloading ffmpeg.wasm.
+  const MUX = {
+    base: 'https://cdn.jsdelivr.net/npm/',
+    libs: [
+      ['mp4-muxer@5.2.1/build/mp4-muxer.js', 'sha384-wr0AQH9RBAKio/g7bHM5245MBCU5B/b0Y9u42cTxRYQQJXKEijZvWEJKL9JG26hs', 'Mp4Muxer'],
+      ['webm-muxer@5.1.1/build/webm-muxer.js', 'sha384-oEVa5h+qe6hizweDNWb8ghfEE5Q4Qp1zSJlf2qnXzi6L2YQptN14457zN5HL/r8S', 'WebMMuxer'],
+    ],
+  };
+  let muxConsent = false;
+  function loadMuxers() {
+    return Promise.all(MUX.libs.map(([path, integrity, glob]) => (window[glob] ? null : new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = MUX.base + path; sc.integrity = integrity; sc.crossOrigin = 'anonymous';
+      sc.onload = res; sc.onerror = () => rej(new Error('تعذّر تحميل ' + path.split('/')[0])); document.head.append(sc);
+    }))));
+  }
+
+  /** Encode the mixed audio with AudioEncoder; returns the codec used (first supported of `codecs`) or null. */
+  async function encodeAudio(ab, codecs, out, check) {
+    const SR = ab.sampleRate; let cfg = null;
+    for (const codec of codecs) {
+      const c = { codec, sampleRate: SR, numberOfChannels: 2, bitrate: 160000 };
+      try { if ((await AudioEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch { /* next */ }
+    }
+    if (!cfg) return null;
+    let err = null;
+    const enc = new AudioEncoder({ output: (ch, meta) => out.push({ ch, meta }), error: (e) => { err = e; } });
+    enc.configure(cfg);
+    const L = ab.getChannelData(0), R = ab.numberOfChannels > 1 ? ab.getChannelData(1) : L, BLOCK = SR / 10;
+    for (let off = 0; off < ab.length; off += BLOCK) {
+      check(); if (err) throw err;
+      const n = Math.min(BLOCK, ab.length - off), data = new Float32Array(n * 2);
+      data.set(L.subarray(off, off + n), 0); data.set(R.subarray(off, off + n), n);
+      const ad = new AudioData({ format: 'f32-planar', sampleRate: SR, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(off / SR * 1e6), data });
+      enc.encode(ad); ad.close();
+      while (enc.encodeQueueSize > 8) await new Promise((r) => enc.addEventListener('dequeue', r, { once: true }));
+    }
+    await enc.flush(); enc.close(); if (err) throw err;
+    return cfg.codec;
+  }
+
+  let lastResult = null;
+  async function saveResult(e) {
+    if (!lastResult || !(window.claude && window.claude.use)) return; // a plain browser follows the download link
+    e.preventDefault();
+    let d = null;
+    try { d = await window.claude.use('downloads'); } catch { /* unavailable */ }
+    if (!d) { toast('الحفظ غير متاح في هذا العرض'); return; }
+    try { await d.save({ filename: lastResult.name, data: lastResult.blob }); toast('تم الحفظ'); } catch (err) {
+      if (!err || err.code !== 'declined') toast('تعذّر الحفظ: ' + ((err && (err.message || err.code)) || ''));
+    }
+  }
+
   async function startFastExport(engine = 'x264') {
-    if (!ffConsent) {
-      if (!confirm('سيُحمَّل محرك ffmpeg.wasm (حوالي 32 ميجابايت) من cdn.jsdelivr.net مرة واحدة، بعد التحقق من سلامته. الترميز يتم على جهازك. متابعة؟')) return;
+    let useMux = false;
+    if (engine === 'wc') {
+      if (!muxConsent) {
+        if (!(await ask('سيُحمَّل مكتبتا دمج صغيرتان (حوالي 140 كيلوبايت) من cdn.jsdelivr.net بعد التحقق من سلامتهما، لدمج الصوت مع الفيديو. الترميز يتم على جهازك. متابعة؟'))) return;
+        muxConsent = true;
+      }
+      try { await loadMuxers(); useMux = true; } catch (err) {
+        if (LIMITED) { toast('تعذّر التصدير: ' + err.message); return; }
+      }
+    }
+    if (!useMux && !ffConsent) {
+      if (!(await ask('سيُحمَّل محرك ffmpeg.wasm (حوالي 32 ميجابايت) من cdn.jsdelivr.net مرة واحدة، بعد التحقق من سلامته. الترميز يتم على جهازك. متابعة؟'))) return;
       ffConsent = true;
     }
     const total = duration(), orig = S.res.slice();
@@ -1358,10 +1444,16 @@
     const check = () => { if (fastCancel) throw new Error('cancel'); };
     let ok = false, enc = null;
     try {
-      const ff = await loadFfmpeg(say); check();
-      say('تجهيز الصوت…', 0.02);
-      const wav = wavBytes(await mixAudio(total)); check();
-      await ff.writeFile('a.wav', wav);
+      let ff = null, audioBuf = null;
+      if (useMux) {
+        say('تجهيز الصوت…', 0.02);
+        audioBuf = await mixAudio(total, 48000); check();
+      } else {
+        ff = await loadFfmpeg(say); check();
+        say('تجهيز الصوت…', 0.02);
+        const wav = wavBytes(await mixAudio(total)); check();
+        await ff.writeFile('a.wav', wav);
+      }
 
       const dec = await openReaders(say); check();
       S.res = res; for (const c of [cv, ov]) { c.width = res[0]; c.height = res[1]; }
@@ -1370,14 +1462,17 @@
         if (e.el.readyState >= 2) return r();
         e.el.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 5000);
       })));
-      let mux = [], outName = 'out.mp4', outMime = 'video/mp4';
+      let mux = [], outName = 'out.mp4', outMime = 'video/mp4', data = null;
       const t0w = performance.now(), segs = [];
       if (engine === 'wc') {
         const bitrate = res[0] * res[1] * FPS * 0.1 * +$('#expQ').value;
-        const pick = await pickWcConfig(res[0], res[1], bitrate);
+        const pick = await pickWcConfig(res[0], res[1], bitrate, !useMux);
         if (!pick) throw new Error('هذا المتصفح لا يدعم ترميز H.264 أو VP9 عبر WebCodecs');
         const chunks = []; let encErr = null;
-        enc = new VideoEncoder({ output: (ch) => { const u = new Uint8Array(ch.byteLength); ch.copyTo(u); chunks.push(u); }, error: (e) => { encErr = e; } });
+        enc = new VideoEncoder({
+          output: (ch, meta) => { if (useMux) { chunks.push({ ch, meta }); } else { const u = new Uint8Array(ch.byteLength); ch.copyTo(u); chunks.push(u); } },
+          error: (e) => { encErr = e; },
+        });
         enc.configure(pick.cfg);
         for (let i = 0; i < N; i++) {
           check(); if (encErr) throw encErr;
@@ -1389,6 +1484,24 @@
           say(`ترميز الإطار ${i + 1} من ${N} · متبقي حوالي ${Math.max(0, Math.round(el / p - el))} ث`, 0.05 + 0.85 * p);
         }
         await enc.flush(); enc.close(); enc = null; if (encErr) throw encErr; check();
+        if (useMux) {
+          say('ترميز الصوت…', 0.93);
+          const isMp4 = pick.kind === 'h264', aq = [];
+          const acodec = await encodeAudio(audioBuf, isMp4 ? ['mp4a.40.2', 'opus'] : ['opus'], aq, check);
+          if (!acodec) throw new Error('هذا المتصفح لا يدعم ترميز الصوت (AAC أو Opus)');
+          say('دمج الصوت والفيديو…', 0.97);
+          const target = new (isMp4 ? Mp4Muxer : WebMMuxer).ArrayBufferTarget();
+          const video = { codec: isMp4 ? 'avc' : 'V_VP9', width: res[0], height: res[1], frameRate: FPS };
+          const audio = { codec: isMp4 ? (acodec === 'opus' ? 'opus' : 'aac') : 'A_OPUS', numberOfChannels: 2, sampleRate: audioBuf.sampleRate };
+          const muxer = isMp4
+            ? new Mp4Muxer.Muxer({ target, video, audio, fastStart: 'in-memory', firstTimestampBehavior: 'offset' })
+            : new WebMMuxer.Muxer({ target, video, audio, firstTimestampBehavior: 'offset' });
+          const all = [...chunks.map((c) => ({ ...c, v: true })), ...aq].sort((a, b) => a.ch.timestamp - b.ch.timestamp || (b.v ? 1 : 0) - (a.v ? 1 : 0));
+          for (const c of all) { if (c.v) muxer.addVideoChunk(c.ch, c.meta); else muxer.addAudioChunk(c.ch, c.meta); }
+          muxer.finalize();
+          data = new Uint8Array(target.buffer);
+          outName = isMp4 ? 'out.mp4' : 'out.webm'; outMime = isMp4 ? 'video/mp4' : 'video/webm';
+        } else {
         say('دمج الصوت والفيديو…', 0.95);
         let args;
         if (pick.kind === 'h264') {
@@ -1400,6 +1513,7 @@
           args = ['-y', '-f', 'ivf', '-i', 'v.ivf', '-i', 'a.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'libvorbis', '-b:a', '160k', 'out.webm'];
         }
         if (await ff.exec(args) !== 0) throw new Error('فشل الدمج');
+        }
       } else {
         // Pipeline: frames are rendered here while earlier frames are JPEG-compressed (off-thread) and x264-encoded
         // in the ffmpeg worker. Its message queue is FIFO, so writes, encodes and deletes stay in order.
@@ -1441,12 +1555,16 @@
         mux = ['list.txt', ...segs];
 
       }
-      const data = await ff.readFile(outName);
-      for (const n of [...mux, 'a.wav', outName]) { try { await ff.deleteFile(n); } catch { /* ignore */ } }
+      if (!data) {
+        data = await ff.readFile(outName);
+        for (const n of [...mux, 'a.wav', outName]) { try { await ff.deleteFile(n); } catch { /* ignore */ } }
+      }
       if (doneUrl) URL.revokeObjectURL(doneUrl);
-      doneUrl = URL.createObjectURL(new Blob([data], { type: outMime }));
+      const outBlob = new Blob([data], { type: outMime });
+      doneUrl = URL.createObjectURL(outBlob);
       $('#expVideo').src = doneUrl;
       const dl = $('#expDl'); dl.href = doneUrl; dl.download = (S.name.trim() || 'video') + (outName.endsWith('webm') ? '.webm' : '.mp4');
+      lastResult = { blob: outBlob, name: dl.download };
       say('اكتمل', 1); showExport('done'); toast(`اكتمل التصدير خلال ${Math.round((performance.now() - t0w) / 1000)} ث` + (dec.total ? ` · فك الترميز بـ WebCodecs: ${dec.used} من ${dec.total} مقاطع` : ''));
       ok = true;
     } catch (err) {
@@ -1456,7 +1574,7 @@
       closeReaders();
       if (enc && enc.state !== 'closed') { try { enc.close(); } catch { /* ignore */ } }
       S.res = orig; S.exporting = false; S.fast = false; S.t = 0; applyRes(); renderAll();
-      if (!ok && ffm && !fastCancel) { for (const n of ['a.wav', 'out.mp4', 'out.webm', 'list.txt', 'v.h264', 'v.ivf']) { try { await ffm.deleteFile(n); } catch { /* ignore */ } } }
+      if (!ok && ffm && !fastCancel && !useMux) { for (const n of ['a.wav', 'out.mp4', 'out.webm', 'list.txt', 'v.h264', 'v.ivf']) { try { await ffm.deleteFile(n); } catch { /* ignore */ } } }
     }
   }
 
@@ -1475,7 +1593,7 @@
     S.aspect = a; S.res = ASPECTS[a].slice(); applyRes(); commit(); renderInspector();
   }
   async function newProject() {
-    if (S.clips.length || S.media.size) if (!confirm('بدء مشروع جديد؟ سيُحذف المشروع الحالي وملفاته.')) return;
+    if (S.clips.length || S.media.size) if (!(await ask('بدء مشروع جديد؟ سيُحذف المشروع الحالي وملفاته.', 'مشروع جديد'))) return;
     pause(); for (const m of S.media.values()) URL.revokeObjectURL(m.url);
     S.media.clear(); S.clips = []; S.sel = null; S.off = {}; S.t = 0; S.name = 'مشروع بدون عنوان'; S.bg = '#000000';
     $('#projName').value = S.name; await idbClear();
@@ -1509,7 +1627,7 @@
     $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
     $('#btnSplit').onclick = split; $('#btnDup').onclick = dupSel; $('#btnDel').onclick = () => removeSel(false);
     $('#btnNew').onclick = newProject; $('#btnExport').onclick = openExport;
-    $('#expStart').onclick = startExport; $('#expMode').onchange = updateExpMode; $('#expCancel').onclick = cancelExport;
+    $('#expDl').addEventListener('click', saveResult); $('#expStart').onclick = startExport; $('#expMode').onchange = updateExpMode; $('#expCancel').onclick = cancelExport;
     $('#aspect').onchange = (e) => setAspect(e.target.value);
     $('#projName').onchange = (e) => { S.name = e.target.value; commit(); };
     $('#snap').onchange = (e) => { S.snap = e.target.checked; };
@@ -1560,7 +1678,7 @@
     });
 
     // test / debugging hook
-    window.__studio = { S, demuxOpen: (f) => Demux.open(f), pickWcConfig, loadFfmpeg, ivfBytes, wavBytes, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
+    window.__studio = { S, setMuxBase: (b) => { MUX.base = b; }, demuxOpen: (f) => Demux.open(f), pickWcConfig, loadFfmpeg, ivfBytes, wavBytes, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
   }
   init();
 })();
