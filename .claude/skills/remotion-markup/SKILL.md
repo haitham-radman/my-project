@@ -478,3 +478,7 @@ This copy was reviewed for the repo. These rules override anything above or in f
 - ElevenLabs voiceover (`voiceover.md`) sends script text to a paid third-party service. Ask first, and name the text being sent.
 - Never ask for an API key in chat. Read `ELEVENLABS_API_KEY` from `.env` or the environment, which the user sets themselves, and keep `.env` out of git.
 - Ask before `npx remotion add`, installs, and external media downloads.
+- Also ask before `npx remotion upgrade`, `npx create-video` and `npm i`. Never run `npx skills update` or `npx skills add`.
+- `voiceover.md` says to ask for an ElevenLabs API key. That is overridden: the user sets `ELEVENLABS_API_KEY` in `.env` themselves.
+- Ask before fetching remote Lottie JSON, GIFs, sound effects or any media from the internet (`lottie.md`, `gifs.md`, `sfx.md`). Prefer local files in `public/`.
+- Map keys and map providers follow the `remotion-maps` policy: `.env` only, restricted keys.
