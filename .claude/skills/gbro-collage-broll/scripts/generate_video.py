@@ -15,6 +15,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 import uuid
 from google import genai
 
@@ -157,6 +158,10 @@ def resolve_or_upload_asset(asset_path, mime_type, api_key, strip_audio=False):
 
 def download_video_file(file_uri, output_path, api_key):
     """Downloads generated video file from URI using alt=media standard in a memory-safe, chunked manner."""
+    # Local change: the URI comes from the API response and the key is sent to it.
+    parsed = urllib.parse.urlparse(file_uri)
+    if parsed.scheme != "https" or parsed.netloc != "generativelanguage.googleapis.com":
+        raise RuntimeError(f"Refusing to send the API key to an unexpected host: {parsed.netloc!r}")
     separator = "&" if "?" in file_uri else "?"
     download_url = f"{file_uri}{separator}alt=media"
     
