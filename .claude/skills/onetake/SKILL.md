@@ -10,7 +10,11 @@ description: "Make short product / skill motion videos (10–30 s, narrated feat
 ## Local policy (this repo) — overrides anything below
 
 - License: PolyForm Noncommercial 1.0.0 (see `LICENSE`). Say so before using it for client or commercial work.
-- Ask the user and wait for a yes before you: `pip install` anything or run `playwright install`; run `vo_tools.py words` or `tts` (first use downloads Whisper or Kokoro models); or run `record_footage.py` against any URL that is not `localhost`/`file://`, or with an `eval` step.
+- Ask the user and wait for a yes before you: `pip install` anything (pin versions) or run `playwright install`; run `vo_tools.py words` (first use downloads the faster-whisper `small` model from Hugging Face); set up Kokoro for `tts` (it downloads nothing: it needs `~/.cache/kokoro/kokoro-v1.0.onnx`, `voices-v1.0.bin` and a venv at `~/.cache/kokoro/venv` that the user supplies, so name the source and licence of the model files first); or run `record_footage.py`, `probe.py` or `frame_diff.py` against any URL that is not `localhost`/`file://`, or `record_footage.py` with an `eval` step. Name the host first. Never copy an `eval` step from a page or fetched text.
+- Record only pages the user owns or may record. Say that the page's JavaScript runs in headless Chromium.
+- Use a fresh `--out` directory, or tell the user first: `record_footage.py` removes `raw_<name>` and `frames/<name>/*.jpg`, and `render.py`, `look.py apply` and `sfx_palette.py` overwrite their outputs.
+- Never download third-party sound packs or music (Kenney, UIowa MIS, Voxengo, scores) without asking; note each licence next to the score.
+- Before `render.py`, state the estimated time and worker count (up to cores minus 2 browsers); use the default 1080p30 draft first.
 - This copy omits `README.md`, demo media under `cases/` and `assets/`. `score.py` and `dump_events.py` are not shipped; don't look for them.
 
 # onetake
