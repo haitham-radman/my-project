@@ -6,7 +6,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 
 - `.claude/skills/<name>/` — one folder per skill. All but `add-skill` are third-party.
 - `.claude/agents/skill-security-reviewer.md` — read-only reviewer for incoming skills.
-- `.claude/hooks/session-start.sh` — installs Node 24 via nvm in cloud sessions.
+- `.claude/hooks/session-start.sh` — installs Node 24 via nvm and the SkillSpector CLI (`uv tool install`, pinned to commit `95a52d8`, best effort) in cloud sessions.
 - `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`; tests in `.claude/hooks/test_check_skill_frontmatter.py`.
 - `.claude/settings.json` — registers both hooks.
 - `studio/` — standalone browser video editor (static HTML/CSS/JS, no build). See `studio/README.md`.
