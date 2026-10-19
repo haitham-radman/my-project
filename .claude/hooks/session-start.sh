@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs Node.js 24 via nvm for Claude Code cloud sessions.
+# Installs Node.js 24 via nvm and the SkillSpector CLI for Claude Code cloud sessions.
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -31,6 +31,23 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
     echo "export NVM_DIR=\"$NVM_DIR\""
     echo "export PATH=\"$NODE_BIN:\$PATH\""
   } >> "$CLAUDE_ENV_FILE"
+fi
+
+# SkillSpector (NVIDIA, Apache-2.0) for the skill-inspector skill, pinned by
+# commit. Best effort: a failure here must not break session start.
+SKILLSPECTOR_COMMIT="95a52d89fa16f608f0b18ccee76b0918ea4b7eef"
+UV_BIN="$HOME/.local/bin"
+if ! PATH="$UV_BIN:$PATH" command -v skillspector >/dev/null 2>&1; then
+  if PATH="$UV_BIN:$PATH" command -v uv >/dev/null 2>&1; then
+    PATH="$UV_BIN:$PATH" uv tool install --python 3.13 \
+      "git+https://github.com/NVIDIA/skillspector.git@$SKILLSPECTOR_COMMIT" >/dev/null 2>&1 \
+      || echo "skillspector install failed; skill-inspector falls back to manual review" >&2
+  else
+    echo "uv not found; skipping skillspector install" >&2
+  fi
+fi
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  echo "export PATH=\"$UV_BIN:\$PATH\"" >> "$CLAUDE_ENV_FILE"
 fi
 
 echo "Node $("$NODE_BIN/node" -v), npm $("$NODE_BIN/npm" -v)" >&2
