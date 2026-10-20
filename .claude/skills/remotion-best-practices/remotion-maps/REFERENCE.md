@@ -43,3 +43,5 @@ This copy was reviewed for the repo. These rules override anything above or in f
 - Map keys (`REMOTION_MAPTILER_KEY`, `REMOTION_GOOGLE_MAPS_API_KEY`, `REMOTION_MAPBOX_TOKEN`) go in `.env` only, never in chat. They are inlined into the Remotion browser bundle, so use restricted keys and do not deploy or upload a project that holds unrestricted ones.
 - Ask before sending requests to tile or 3D APIs (some are billed), before `npm i` of map libraries, and before the render loads CesiumJS from `cesium.com`.
 - The bundled `.mjs` scripts are local geometry helpers. Do not give them other paths than the user's own data.
+- The "(unrestricted)" note in `techniques/maptiler/TECHNIQUE.md` is overridden: use a domain- or referrer-restricted key where possible, and warn that the key is embedded in the render bundle and in any uploaded or deployed build.
+- Mapbox and Google 3D tiles requests are billed to the user's key. State the provider before the first render. CesiumJS loads from `cesium.com` pinned at 1.143 without an integrity hash.
