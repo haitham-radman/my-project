@@ -10,9 +10,10 @@
 @font-face{font-family:"Work Sans";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/WorkSans-400.ttf) format("truetype")}
 @font-face{font-family:"Work Sans";font-weight:500;font-style:normal;font-display:swap;src:url(fonts/WorkSans-500.ttf) format("truetype")}
 :root{
+  --step-h2:clamp(28px,2.8vw,40px);
   --bg:#eeecea; --surface:#e4e1dd; --ink:#333231; --muted:#6b6763;
   --accent:#5c6b54; --accent-ink:#fff; --field-1:#cdc3b6; --field-2:#b9afa1;
-  --step-small:clamp(.8125rem,.79rem + .1vw,.875rem);
+  --step-small:14px;
   --step-body:clamp(1.0625rem,1rem + .25vw,1.1875rem);
   --step-lead:clamp(1.25rem,1.1rem + .7vw,1.625rem);
   --step-head:clamp(2rem,1.3rem + 3.2vw,4rem);
@@ -49,11 +50,11 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 .hero-frag{grid-column:6/13;margin-top:8px}
 
 /* review report fragment (product's own conventions inside data-ui) */
-.report{background:#fbfaf9;border:1px solid #d3cfca /* taste-skill-ignore */;border-radius:6px;font-size:14px;line-height:1.45;max-width:660px;box-shadow:none}
+.report{background:#f7f7f7;border:1px solid #d3cfca /* taste-skill-ignore */;border-radius:6px;font-size:var(--step-small);line-height:1.45;box-shadow:none}
 .report-h{display:flex;justify-content:space-between;gap:16px;padding:16px 18px;background:#f1efec;border-radius:6px 6px 0 0}
-.report-h strong{display:block;font-weight:500;font-size:15px}
-.report-h div span{color:var(--muted);font-size:13px}
-.report-h .verdict{align-self:flex-start;white-space:nowrap;background:var(--accent);color:#fff;font-weight:500;font-size:13px;padding:5px 10px;border-radius:4px}
+.report-h strong{display:block;font-weight:500;font-size:var(--step-small)}
+.report-h div span{color:var(--muted);font-size:var(--step-small)}
+.report-h .verdict{align-self:flex-start;white-space:nowrap;background:var(--accent);color:#fff;font-weight:500;font-size:var(--step-small);padding:5px 10px;border-radius:4px}
 .rows{list-style:none;padding:0}
 .rows button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:64px 1fr;gap:12px;width:100%;padding:11px 18px;margin-bottom:2px;cursor:pointer;transition:background .15s}
 .rows button:hover{background:#f1efec}
@@ -61,10 +62,10 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 .rows button[aria-pressed=true]{background:#e9eee5}
 .sev{font-weight:500}
 .sev.med{color:#8a5a12}.sev.low{color:var(--muted)}
-.rows small{display:block;color:var(--muted);font-size:13px}
+.rows small{display:block;color:var(--muted);font-size:var(--step-small)}
 .detail{padding:16px 18px;background:#f1efec;border-radius:0 0 6px 6px;min-height:118px}
 .detail b{font-weight:500}
-.detail p{margin:0;font-size:14px;max-width:none}
+.detail p{margin:0;font-size:var(--step-small);max-width:none}
 .detail .policy{margin-top:8px;color:var(--muted)}
 .detail{transition:opacity .15s}
 .detail.swap{opacity:0}
@@ -76,22 +77,22 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 .field:nth-child(2){background:var(--field-1)}
 .field:nth-child(3){background:var(--field-2)}
 .field:nth-child(4){background:var(--ink);color:#eeecea}
-.how h2{position:absolute;top:28px;left:28px;font-size:clamp(1.75rem,2.6vw,2.5rem);font-weight:500;max-width:9ch;letter-spacing:-.03em;z-index:1}
-.card{position:absolute;top:38%;left:50%;width:260px;translate:-50% -50%;background:#fbfaf9;color:#333231;border:1px solid #d3cfca /* taste-skill-ignore */;border-radius:6px;padding:14px;font-size:13px;line-height:1.45;transition:transform .15s var(--ease)}
+.how h2{position:absolute;top:28px;left:28px;font-size:var(--step-h2);font-weight:500;max-width:9ch;letter-spacing:-.03em;z-index:1}
+.card{position:absolute;top:38%;left:50%;width:260px;translate:-50% -50%;background:#f7f7f7;color:#333231;border:1px solid #d3cfca /* taste-skill-ignore */;border-radius:6px;padding:14px;font-size:var(--step-small);line-height:1.45;transition:transform .15s var(--ease)}
 .field:hover .card{transform:translateY(-6px)}
-.card b{display:block;font-weight:500;font-size:14px;margin-bottom:8px}
+.card b{display:block;font-weight:500;font-size:var(--step-small);margin-bottom:8px}
 .card ul{list-style:none;padding:0;display:grid;gap:5px}
 .card li{display:flex;gap:8px;align-items:center}
-.card i{width:13px;height:13px;border:1px solid #9b958e /* taste-skill-ignore */;border-radius:3px;flex:none}
-.card i.on{background:var(--accent);border-color:var(--accent)}
+.card .chk{width:13px;height:13px;border:1px solid #9b958e /* taste-skill-ignore */;border-radius:3px;flex:none}
+.card .chk.on{background:var(--accent);border-color:var(--accent)}
 .card .tag{margin-top:10px;color:var(--muted)}
 .card .tag.ok{color:var(--accent);font-weight:500}
-.field p{font-size:clamp(1.375rem,2vw,2rem);line-height:1.15;letter-spacing:-.02em;font-weight:400;max-width:12ch}
+.field p{font-size:var(--step-lead);line-height:1.15;letter-spacing:-.02em;font-weight:400;max-width:12ch}
 
 /* list */
 .sect{padding:clamp(96px,12vw,200px) var(--m) 0}
 .list-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
-.list-head h2{font-size:clamp(2.25rem,4vw,3.75rem)}
+.list-head h2{font-size:var(--step-h2)}
 .list-head h2 span{color:var(--muted);display:block}
 .list-body{display:grid;grid-template-columns:150px 1fr;gap:40px;margin-top:56px}
 .tabs{display:grid;gap:6px;align-content:start}
@@ -99,14 +100,14 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 .tabs button:hover{transform:translateX(3px)}
 .tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .tabs button[aria-selected=true]{background:var(--ink);color:#eeecea}
-.tabs b{font-weight:500;font-size:16px}.tabs small{font-size:13px;opacity:.75}
+.tabs b{font-weight:500;font-size:var(--step-small)}.tabs small{font-size:var(--step-small);opacity:.75}
 .bands{display:grid;gap:4px;align-content:start}
 .band{display:grid;grid-template-columns:minmax(150px,22%) 1fr minmax(180px,30%);gap:24px;align-items:center;min-height:76px;padding:12px 20px;border-radius:8px;background:var(--surface)}
 .band:nth-child(even){background:#dad6d1}
-.band h3{font-size:18px;font-weight:500;letter-spacing:-.01em;line-height:1.2}
-.band p{font-size:14px;line-height:1.4;color:var(--ink)}
-.band .gate{font-size:14px;color:var(--muted);text-align:right}
-.band{transition:transform .15s var(--ease)}
+.band h3{font-size:var(--step-body);font-weight:500;letter-spacing:-.01em;line-height:1.2}
+.band p{font-size:var(--step-small);line-height:1.4;color:var(--ink)}
+.band .gate{font-size:var(--step-small);color:#4f4b47;text-align:right}
+.band{transition:transform .15s var(--ease);animation:fade .5s var(--ease) backwards}
 .band:hover{transform:translateX(4px)}
 
 
@@ -116,21 +117,22 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 .c-ink{fill:var(--ink)}.c-acc{fill:var(--accent)}.c-accd{fill:#4d5b46}
 .c-f1{fill:var(--field-1)}.c-f2{fill:var(--field-2)}.c-f3{fill:#a89e90}
 .c-s1{fill:var(--surface)}.c-s2{fill:#d6d1ca}.c-s3{fill:#c9c3bb}
-.c-paper{fill:#fbfaf9}.c-glass{fill:#f4f2ef}
+.c-paper{fill:#f7f7f7}.c-glass{fill:#f0f0ef}
 .t-ink{fill:var(--ink)}.t-mut{fill:var(--muted)}.t-bg{fill:#eeecea}.t-med{fill:#8a5a12}
 .band-pic{margin:clamp(96px,12vw,200px) calc(-1*var(--m)) 0;height:clamp(300px,42vw,600px);position:relative}
 .band-cap{padding:12px var(--m) 0;font-size:var(--step-small);color:var(--muted);margin:0}
 
 /* faq */
 .faq{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;align-items:start}
-.q-list{grid-column:1/6;list-style:none;padding:0;display:grid;gap:18px;font-size:18px;line-height:1.3}
-.q-list .t{color:var(--muted);font-weight:400;padding-left:24px}
+.q-list{grid-column:1/6;list-style:none;padding:0;display:grid;gap:18px;font-size:var(--step-body);line-height:1.3}
+.q-list .t{color:var(--muted);padding-left:24px}
+.q-list .t h2{font:400 var(--step-body)/1.3 "Work Sans",system-ui,sans-serif;letter-spacing:0}
 .q-list button{all:unset;display:flex;gap:16px;align-items:baseline;cursor:pointer;color:var(--muted);transition:color .15s}
 .q-list button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none;translate:0 -1px;transition:background .15s}
 .q-list button:hover,.q-list button[aria-selected=true]{color:var(--ink)}
 .q-list button[aria-selected=true]::before{background:var(--accent)}
 .q-list button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
-.answer{grid-column:7/13;position:sticky;top:120px;font-size:clamp(1.375rem,1.2rem + .8vw,1.75rem);line-height:1.3;max-width:30ch;transition:opacity .15s;min-height:8em}
+.answer{grid-column:7/13;position:sticky;top:120px;font-size:var(--step-lead);line-height:1.3;max-width:30ch;transition:opacity .15s;min-height:8em}
 .answer.swap{opacity:0}
 
 /* cta */
@@ -138,42 +140,47 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 .tile{height:360px;min-width:0}
 .tile.a{grid-column:1/3;background:var(--field-1);margin-left:-40px;overflow:hidden}
 .tile.m{grid-column:3/11;background:var(--accent);color:var(--accent-ink);padding:40px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px}
-.tile.m h2{font-size:40px;font-weight:400;max-width:14ch}
-.tile.m p{font-size:17px;max-width:44ch}
+.tile.m h2{font-size:var(--step-h2);font-weight:400;max-width:14ch}
+.tile.m p{font-size:var(--step-body);max-width:44ch}
 .tile.m .btn{background:#eeecea;color:var(--ink)}
 .tile.m .btn:hover{background:#fff}
 .tile.z{grid-column:11/13;background:var(--field-2);margin-right:-40px;overflow:hidden}
 
 /* footer */
-.foot{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:baseline;padding:30svh var(--m) 30px;font-size:15px}
+.foot{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:baseline;padding:30svh var(--m) 30px;font-size:var(--step-small)}
 .foot nav{display:flex;gap:24px}.foot nav a{color:var(--ink)}
 .foot span{color:var(--muted)}.foot span:last-child{text-align:right}
 
 /* entrances */
 .rv{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 .rv.in{opacity:1;transform:none}
+.field.rv:nth-child(2){transition-delay:.08s}.field.rv:nth-child(3){transition-delay:.16s}.field.rv:nth-child(4){transition-delay:.24s}
 .no-js .rv,.no-js .line>span,.no-js .hero p,.no-js .hero .btn{opacity:1;transform:none;animation:none}
 
 @media (max-width:900px){
   .hero{display:block}.hero-frag{margin-top:48px}
   .hero h1{font-size:clamp(3rem,13.5vw,4.5rem)}
-  .how{grid-template-columns:1fr}
-  .field{min-height:64svh;justify-content:flex-start;padding:20px}
-  .how h2{position:static;margin-bottom:16px;max-width:none;order:-2}
-  .field p{max-width:none;font-size:24px;order:-1}
-  .card{position:static;translate:none;margin-top:32px}
+  .how{grid-template-columns:repeat(2,1fr)}
+  .field{min-height:56svh}
   .list-body{grid-template-columns:1fr;gap:16px}
   .tabs{grid-auto-flow:column;grid-auto-columns:1fr;position:sticky;top:0;z-index:2;background:var(--bg);padding-block:8px}
   .tabs button{padding:0 10px}
   .band{grid-template-columns:1fr;gap:6px;padding:16px}
   .band .gate{text-align:left}
   .faq{display:block}
-  .answer{position:static;margin-top:24px;font-size:19px;min-height:0}
+  .answer{position:static;margin-top:24px;min-height:0;max-width:none}
   .cta{display:block;margin-inline:0}
   .cta .tile.m{height:auto;min-height:300px;padding:28px var(--m);margin:0}
   .tile.a,.tile.z{display:none}
-  .foot{grid-template-columns:1fr;gap:8px;padding:20svh var(--m) 24px;font-size:14px}
+  .foot{grid-template-columns:1fr;gap:8px;padding:20svh var(--m) 24px;font-size:var(--step-small)}
   .foot nav{flex-wrap:wrap;gap:16px}.foot span:last-child{text-align:left}
+}
+@media (max-width:600px){
+  .how{grid-template-columns:1fr}
+  .field{min-height:0;justify-content:flex-start;padding:20px 20px 36px}
+  .how h2{position:static;margin-bottom:16px;max-width:none;order:-2}
+  .field p{max-width:none;order:-1}
+  .card{position:static;translate:none;margin-top:28px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
@@ -218,28 +225,28 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 </section>
 
 <section class="how" id="how" aria-labelledby="h-how">
-  <div class="field">
+  <div class="field rv">
     <h2 id="h-how">How a skill gets in</h2>
-    <div class="card" data-ui><b>taste-skill</b><ul><li><i></i>Copied as published</li><li><i></i>Scanned</li><li><i></i>Reviewed</li><li><i></i>Policy written</li></ul><div class="tag">Waiting</div></div>
+    <div class="card" data-ui><b>taste-skill</b><ul><li><span class="chk"></span>Copied as published</li><li><span class="chk"></span>Scanned</li><li><span class="chk"></span>Reviewed</li><li><span class="chk"></span>Policy written</li></ul><div class="tag">Waiting</div></div>
     <p>First it is copied, untouched.</p>
   </div>
-  <div class="field">
-    <div class="card" data-ui><b>taste-skill</b><ul><li><i class="on"></i>Copied as published</li><li><i class="on"></i>Scanned</li><li><i></i>Reviewed</li><li><i></i>Policy written</li></ul><div class="tag">Scan found 5 notes</div></div>
+  <div class="field rv">
+    <div class="card" data-ui><b>taste-skill</b><ul><li><span class="chk on"></span>Copied as published</li><li><span class="chk on"></span>Scanned</li><li><span class="chk"></span>Reviewed</li><li><span class="chk"></span>Policy written</li></ul><div class="tag">Scan found 5 notes</div></div>
     <p>Then the scan lists what it runs.</p>
   </div>
-  <div class="field">
-    <div class="card" data-ui><b>taste-skill</b><ul><li><i class="on"></i>Copied as published</li><li><i class="on"></i>Scanned</li><li><i class="on"></i>Reviewed</li><li><i></i>Policy written</li></ul><div class="tag">Verdict: import with notes</div></div>
+  <div class="field rv">
+    <div class="card" data-ui><b>taste-skill</b><ul><li><span class="chk on"></span>Copied as published</li><li><span class="chk on"></span>Scanned</li><li><span class="chk on"></span>Reviewed</li><li><span class="chk"></span>Policy written</li></ul><div class="tag">Verdict: import with notes</div></div>
     <p>Then a read-only agent reads it.</p>
   </div>
-  <div class="field">
-    <div class="card" data-ui><b>taste-skill</b><ul><li><i class="on"></i>Copied as published</li><li><i class="on"></i>Scanned</li><li><i class="on"></i>Reviewed</li><li><i class="on"></i>Policy written</li></ul><div class="tag ok">Merged</div></div>
+  <div class="field rv">
+    <div class="card" data-ui><b>taste-skill</b><ul><li><span class="chk on"></span>Copied as published</li><li><span class="chk on"></span>Scanned</li><li><span class="chk on"></span>Reviewed</li><li><span class="chk on"></span>Policy written</li></ul><div class="tag ok">Merged</div></div>
     <p>Last it gets a consent policy.</p>
   </div>
 </section>
 
 <section class="sect" id="list" aria-labelledby="h-list">
   <div class="list-head rv">
-    <h2 id="h-list"><span>Sixty-five skills,</span>each with its limits written down</h2>
+    <h2 id="h-list"><span>Sixty-five skills,</span>every limit written down</h2>
     <a class="btn" href="https://github.com/haitham-radman/my-project/tree/main/.claude/skills">Browse the folder</a>
   </div>
   <div class="list-body rv">
@@ -326,7 +333,7 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
 <section class="sect" id="faq" aria-labelledby="h-faq">
   <div class="faq rv">
     <ul class="q-list" id="qs">
-      <li class="t"><h2 id="h-faq" style="font:400 18px/1.3 'Work Sans',system-ui,sans-serif;letter-spacing:0">Questions</h2></li>
+      <li class="t"><h2 id="h-faq">Questions</h2></li>
     </ul>
     <div class="answer" id="ans" aria-live="polite"></div>
   </div>
@@ -417,7 +424,7 @@ h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
   function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
   function pick(i){
     tabs.querySelectorAll('button').forEach(function(b,k){b.setAttribute('aria-selected',k==i)});
-    bands.innerHTML=G[i].r.map(function(r){return '<div class="band"><h3>'+esc(r[0])+'</h3><p>'+esc(r[1])+'</p><span class="gate">'+esc(r[2])+'</span></div>'}).join('');
+    bands.innerHTML=G[i].r.map(function(r,k){return '<div class="band" style="animation-delay:'+(k*60)+'ms"><h3>'+esc(r[0])+'</h3><p>'+esc(r[1])+'</p><span class="gate">'+esc(r[2])+'</span></div>'}).join('');
   }
   G.forEach(function(g,i){
     var b=document.createElement('button');b.setAttribute('role','tab');
