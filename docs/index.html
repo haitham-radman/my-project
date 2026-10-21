@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>my-project: Claude Code skills, read before they run</title>
+<meta name="description" content="A library of 65 Claude Code skills. Every import is scanned, read by a review agent and given a written consent policy.">
+<style>
+@font-face{font-family:"Work Sans";font-weight:300;font-style:normal;font-display:swap;src:url(fonts/WorkSans-300.ttf) format("truetype")}
+@font-face{font-family:"Work Sans";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/WorkSans-400.ttf) format("truetype")}
+@font-face{font-family:"Work Sans";font-weight:500;font-style:normal;font-display:swap;src:url(fonts/WorkSans-500.ttf) format("truetype")}
+:root{
+  --bg:#eeecea; --surface:#e4e1dd; --ink:#333231; --muted:#6b6763;
+  --accent:#5c6b54; --accent-ink:#fff; --field-1:#cdc3b6; --field-2:#b9afa1;
+  --step-small:clamp(.8125rem,.79rem + .1vw,.875rem);
+  --step-body:clamp(1.0625rem,1rem + .25vw,1.1875rem);
+  --step-lead:clamp(1.25rem,1.1rem + .7vw,1.625rem);
+  --step-head:clamp(2rem,1.3rem + 3.2vw,4rem);
+  --m:clamp(16px,3vw,32px); --r:0; --ease:cubic-bezier(.2,.7,.1,1);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:400 var(--step-body)/1.55 "Work Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+::selection{background:var(--accent);color:var(--accent-ink)}
+h1,h2,h3{font-weight:300;letter-spacing:-.035em;line-height:1}
+.wrap{padding-inline:var(--m)}
+.btn{display:inline-flex;align-items:center;min-height:48px;padding:0 24px;background:var(--accent);color:var(--accent-ink);font:500 var(--step-body)/1 "Work Sans",system-ui,sans-serif;text-decoration:none;border:0;border-radius:var(--r);cursor:pointer;transition:transform .15s var(--ease),background .15s}
+.btn:hover{transform:translateY(-2px);background:#4d5b46}
+.btn:active{transform:translateY(0)}
+.link{font-weight:500;text-underline-offset:4px}
+
+/* nav */
+.nav{display:flex;justify-content:space-between;align-items:center;padding:28px var(--m)}
+.nav b{font-weight:500;font-size:var(--step-small)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;padding:clamp(32px,6vw,88px) var(--m) clamp(96px,12vw,200px);align-items:start}
+.hero-text{grid-column:1/6}
+.hero h1{font-size:clamp(3rem,6vw,5.5rem)}
+.line{display:block;overflow:hidden;padding-bottom:.08em}
+.line>span{display:block;transform:translateY(105%);animation:rise .9s var(--ease) forwards}
+.line:nth-child(2)>span{animation-delay:.11s}
+@keyframes rise{to{transform:none}}
+.hero p{margin-top:40px;max-width:34ch;opacity:0;animation:fade .7s .7s var(--ease) forwards}
+.hero .btn{margin-top:32px;opacity:0;animation:fade .7s .8s var(--ease) forwards}
+@keyframes fade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.hero-frag{grid-column:6/13;margin-top:8px}
+
+/* review report fragment (product's own conventions inside data-ui) */
+.report{background:#fbfaf9;border:1px solid #d3cfca /* taste-skill-ignore */;border-radius:6px;font-size:14px;line-height:1.45;max-width:660px;box-shadow:none}
+.report-h{display:flex;justify-content:space-between;gap:16px;padding:16px 18px;background:#f1efec;border-radius:6px 6px 0 0}
+.report-h strong{display:block;font-weight:500;font-size:15px}
+.report-h div span{color:var(--muted);font-size:13px}
+.report-h .verdict{align-self:flex-start;white-space:nowrap;background:var(--accent);color:#fff;font-weight:500;font-size:13px;padding:5px 10px;border-radius:4px}
+.rows{list-style:none;padding:0}
+.rows button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:64px 1fr;gap:12px;width:100%;padding:11px 18px;margin-bottom:2px;cursor:pointer;transition:background .15s}
+.rows button:hover{background:#f1efec}
+.rows button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.rows button[aria-pressed=true]{background:#e9eee5}
+.sev{font-weight:500}
+.sev.med{color:#8a5a12}.sev.low{color:var(--muted)}
+.rows small{display:block;color:var(--muted);font-size:13px}
+.detail{padding:16px 18px;background:#f1efec;border-radius:0 0 6px 6px;min-height:118px}
+.detail b{font-weight:500}
+.detail p{margin:0;font-size:14px;max-width:none}
+.detail .policy{margin-top:8px;color:var(--muted)}
+.detail{transition:opacity .15s}
+.detail.swap{opacity:0}
+
+/* how it works: four fields */
+.how{display:grid;grid-template-columns:repeat(4,1fr)}
+.field{position:relative;min-height:84svh;padding:28px;display:flex;flex-direction:column;justify-content:flex-end}
+.field:nth-child(1){background:var(--surface)}
+.field:nth-child(2){background:var(--field-1)}
+.field:nth-child(3){background:var(--field-2)}
+.field:nth-child(4){background:var(--ink);color:#eeecea}
+.how h2{position:absolute;top:28px;left:28px;font-size:clamp(1.75rem,2.6vw,2.5rem);font-weight:500;max-width:9ch;letter-spacing:-.03em;z-index:1}
+.card{position:absolute;top:38%;left:50%;width:260px;translate:-50% -50%;background:#fbfaf9;color:#333231;border:1px solid #d3cfca /* taste-skill-ignore */;border-radius:6px;padding:14px;font-size:13px;line-height:1.45;transition:transform .15s var(--ease)}
+.field:hover .card{transform:translateY(-6px)}
+.card b{display:block;font-weight:500;font-size:14px;margin-bottom:8px}
+.card ul{list-style:none;padding:0;display:grid;gap:5px}
+.card li{display:flex;gap:8px;align-items:center}
+.card i{width:13px;height:13px;border:1px solid #9b958e /* taste-skill-ignore */;border-radius:3px;flex:none}
+.card i.on{background:var(--accent);border-color:var(--accent)}
+.card .tag{margin-top:10px;color:var(--muted)}
+.card .tag.ok{color:var(--accent);font-weight:500}
+.field p{font-size:clamp(1.375rem,2vw,2rem);line-height:1.15;letter-spacing:-.02em;font-weight:400;max-width:12ch}
+
+/* list */
+.sect{padding:clamp(96px,12vw,200px) var(--m) 0}
+.list-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.list-head h2{font-size:clamp(2.25rem,4vw,3.75rem)}
+.list-head h2 span{color:var(--muted);display:block}
+.list-body{display:grid;grid-template-columns:150px 1fr;gap:40px;margin-top:56px}
+.tabs{display:grid;gap:6px;align-content:start}
+.tabs button{all:unset;box-sizing:border-box;height:64px;padding:0 16px;display:flex;flex-direction:column;justify-content:center;background:var(--surface);cursor:pointer;transition:background .15s,transform .15s var(--ease)}
+.tabs button:hover{transform:translateX(3px)}
+.tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tabs button[aria-selected=true]{background:var(--ink);color:#eeecea}
+.tabs b{font-weight:500;font-size:16px}.tabs small{font-size:13px;opacity:.75}
+.bands{display:grid;gap:4px;align-content:start}
+.band{display:grid;grid-template-columns:minmax(150px,22%) 1fr minmax(180px,30%);gap:24px;align-items:center;min-height:76px;padding:12px 20px;border-radius:8px;background:var(--surface)}
+.band:nth-child(even){background:#dad6d1}
+.band h3{font-size:18px;font-weight:500;letter-spacing:-.01em;line-height:1.2}
+.band p{font-size:14px;line-height:1.4;color:var(--ink)}
+.band .gate{font-size:14px;color:var(--muted);text-align:right}
+.band{transition:transform .15s var(--ease)}
+.band:hover{transform:translateX(4px)}
+
+
+/* drawn pictures: one flat language, palette colours, tone steps for light */
+.draw{display:block;width:100%;height:100%}
+.draw text{font-family:"Work Sans",system-ui,sans-serif}
+.c-ink{fill:var(--ink)}.c-acc{fill:var(--accent)}.c-accd{fill:#4d5b46}
+.c-f1{fill:var(--field-1)}.c-f2{fill:var(--field-2)}.c-f3{fill:#a89e90}
+.c-s1{fill:var(--surface)}.c-s2{fill:#d6d1ca}.c-s3{fill:#c9c3bb}
+.c-paper{fill:#fbfaf9}.c-glass{fill:#f4f2ef}
+.t-ink{fill:var(--ink)}.t-mut{fill:var(--muted)}.t-bg{fill:#eeecea}.t-med{fill:#8a5a12}
+.band-pic{margin:clamp(96px,12vw,200px) calc(-1*var(--m)) 0;height:clamp(300px,42vw,600px);position:relative}
+.band-cap{padding:12px var(--m) 0;font-size:var(--step-small);color:var(--muted);margin:0}
+
+/* faq */
+.faq{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;align-items:start}
+.q-list{grid-column:1/6;list-style:none;padding:0;display:grid;gap:18px;font-size:18px;line-height:1.3}
+.q-list .t{color:var(--muted);font-weight:400;padding-left:24px}
+.q-list button{all:unset;display:flex;gap:16px;align-items:baseline;cursor:pointer;color:var(--muted);transition:color .15s}
+.q-list button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none;translate:0 -1px;transition:background .15s}
+.q-list button:hover,.q-list button[aria-selected=true]{color:var(--ink)}
+.q-list button[aria-selected=true]::before{background:var(--accent)}
+.q-list button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.answer{grid-column:7/13;position:sticky;top:120px;font-size:clamp(1.375rem,1.2rem + .8vw,1.75rem);line-height:1.3;max-width:30ch;transition:opacity .15s;min-height:8em}
+.answer.swap{opacity:0}
+
+/* cta */
+.cta{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:clamp(96px,12vw,200px);overflow:hidden}
+.tile{height:360px;min-width:0}
+.tile.a{grid-column:1/3;background:var(--field-1);margin-left:-40px;overflow:hidden}
+.tile.m{grid-column:3/11;background:var(--accent);color:var(--accent-ink);padding:40px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px}
+.tile.m h2{font-size:40px;font-weight:400;max-width:14ch}
+.tile.m p{font-size:17px;max-width:44ch}
+.tile.m .btn{background:#eeecea;color:var(--ink)}
+.tile.m .btn:hover{background:#fff}
+.tile.z{grid-column:11/13;background:var(--field-2);margin-right:-40px;overflow:hidden}
+
+/* footer */
+.foot{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:baseline;padding:30svh var(--m) 30px;font-size:15px}
+.foot nav{display:flex;gap:24px}.foot nav a{color:var(--ink)}
+.foot span{color:var(--muted)}.foot span:last-child{text-align:right}
+
+/* entrances */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.in{opacity:1;transform:none}
+.no-js .rv,.no-js .line>span,.no-js .hero p,.no-js .hero .btn{opacity:1;transform:none;animation:none}
+
+@media (max-width:900px){
+  .hero{display:block}.hero-frag{margin-top:48px}
+  .hero h1{font-size:clamp(3rem,13.5vw,4.5rem)}
+  .how{grid-template-columns:1fr}
+  .field{min-height:64svh;justify-content:flex-start;padding:20px}
+  .how h2{position:static;margin-bottom:16px;max-width:none;order:-2}
+  .field p{max-width:none;font-size:24px;order:-1}
+  .card{position:static;translate:none;margin-top:32px}
+  .list-body{grid-template-columns:1fr;gap:16px}
+  .tabs{grid-auto-flow:column;grid-auto-columns:1fr;position:sticky;top:0;z-index:2;background:var(--bg);padding-block:8px}
+  .tabs button{padding:0 10px}
+  .band{grid-template-columns:1fr;gap:6px;padding:16px}
+  .band .gate{text-align:left}
+  .faq{display:block}
+  .answer{position:static;margin-top:24px;font-size:19px;min-height:0}
+  .cta{display:block;margin-inline:0}
+  .cta .tile.m{height:auto;min-height:300px;padding:28px var(--m);margin:0}
+  .tile.a,.tile.z{display:none}
+  .foot{grid-template-columns:1fr;gap:8px;padding:20svh var(--m) 24px;font-size:14px}
+  .foot nav{flex-wrap:wrap;gap:16px}.foot span:last-child{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .line>span{transform:none}.hero p,.hero .btn,.rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body class="no-js">
+<script>document.body.classList.remove('no-js')</script>
+
+<header class="nav">
+  <b>my-project</b>
+  <a class="link" href="https://github.com/haitham-radman/my-project">Repository</a>
+</header>
+
+<main>
+<section class="hero" aria-labelledby="t">
+  <div class="hero-text">
+    <h1 id="t"><span class="line"><span>Read before</span></span><span class="line"><span>it runs.</span></span></h1>
+    <p>65 Claude Code skills. Every import is scanned, read by a review agent and given a written consent policy before it goes in.</p>
+    <a class="btn" href="#how">See how a skill gets in</a>
+  </div>
+  <div class="hero-frag rv">
+    <div class="report" data-ui>
+      <div class="report-h">
+        <div><strong>design-taste-frontend</strong><span>Leonxlnx/taste-skill at 6010f91, MIT, 38 files</span></div>
+        <span class="verdict">Import with notes</span>
+      </div>
+      <ul class="rows" id="rows">
+        <li><button aria-pressed="true" data-i="0"><span class="sev med">Medium</span><span>Launches a local browser with remote debugging<small>scripts/lib/cdp.mjs</small></span></button></li>
+        <li><button aria-pressed="false" data-i="1"><span class="sev low">Low</span><span>Runs scripts inside the page it inspects<small>scripts/inspect.mjs</small></span></button></li>
+        <li><button aria-pressed="false" data-i="2"><span class="sev low">Low</span><span>Serves the project folder on 127.0.0.1<small>scripts/inspect.mjs</small></span></button></li>
+        <li><button aria-pressed="false" data-i="3"><span class="sev low">Low</span><span>Sends search text to open collections<small>scripts/assets.mjs</small></span></button></li>
+        <li><button aria-pressed="false" data-i="4"><span class="sev low">Low</span><span>Writes a draw history to the home folder<small>scripts/draw.mjs</small></span></button></li>
+      </ul>
+      <div class="detail" id="detail" aria-live="polite">
+        <p><b>What it does.</b> It starts a headless Chrome with a throwaway profile and a loopback-only debug port. Your own profile and cookies are never touched.</p>
+        <p class="policy"><b>Policy added.</b> Ask before running it on a remote or untrusted URL.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how" aria-labelledby="h-how">
+  <div class="field">
+    <h2 id="h-how">How a skill gets in</h2>
+    <div class="card" data-ui><b>taste-skill</b><ul><li><i></i>Copied as published</li><li><i></i>Scanned</li><li><i></i>Reviewed</li><li><i></i>Policy written</li></ul><div class="tag">Waiting</div></div>
+    <p>First it is copied, untouched.</p>
+  </div>
+  <div class="field">
+    <div class="card" data-ui><b>taste-skill</b><ul><li><i class="on"></i>Copied as published</li><li><i class="on"></i>Scanned</li><li><i></i>Reviewed</li><li><i></i>Policy written</li></ul><div class="tag">Scan found 5 notes</div></div>
+    <p>Then the scan lists what it runs.</p>
+  </div>
+  <div class="field">
+    <div class="card" data-ui><b>taste-skill</b><ul><li><i class="on"></i>Copied as published</li><li><i class="on"></i>Scanned</li><li><i class="on"></i>Reviewed</li><li><i></i>Policy written</li></ul><div class="tag">Verdict: import with notes</div></div>
+    <p>Then a read-only agent reads it.</p>
+  </div>
+  <div class="field">
+    <div class="card" data-ui><b>taste-skill</b><ul><li><i class="on"></i>Copied as published</li><li><i class="on"></i>Scanned</li><li><i class="on"></i>Reviewed</li><li><i class="on"></i>Policy written</li></ul><div class="tag ok">Merged</div></div>
+    <p>Last it gets a consent policy.</p>
+  </div>
+</section>
+
+<section class="sect" id="list" aria-labelledby="h-list">
+  <div class="list-head rv">
+    <h2 id="h-list"><span>Sixty-five skills,</span>each with its limits written down</h2>
+    <a class="btn" href="https://github.com/haitham-radman/my-project/tree/main/.claude/skills">Browse the folder</a>
+  </div>
+  <div class="list-body rv">
+    <div class="tabs" role="tablist" aria-label="Skill groups" id="tabs"></div>
+    <div class="bands" id="bands" role="tabpanel"></div>
+  </div>
+
+  <figure class="band-pic rv">
+    <svg class="draw" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A desk with three skill folders, a review sheet being stamped, and a magnifying glass over one line of it">
+      <rect class="c-f1" width="1440" height="600"/>
+      <rect class="c-f2" y="400" width="1440" height="200"/>
+      <rect class="c-f3" y="400" width="1440" height="14"/>
+      <g>
+  <rect class="c-s3" x="90" y="224" width="120" height="34" rx="6"/>
+  <text class="t-ink" x="106" y="246" font-size="15" font-weight="500">supabase</text>
+  <rect class="c-s2" x="90" y="250" width="430" height="250" rx="6"/>
+  <rect class="c-s1" x="90" y="272" width="430" height="228" rx="6"/>
+  <rect class="c-s2" x="114" y="302" width="116" height="22" rx="4"/>
+  <text class="t-mut" x="126" y="318" font-size="13">policy added</text>
+</g>
+      <g>
+  <rect class="c-s3" x="250" y="274" width="134" height="34" rx="6"/>
+  <text class="t-ink" x="266" y="296" font-size="15" font-weight="500">hyperframes</text>
+  <rect class="c-s2" x="250" y="300" width="430" height="250" rx="6"/>
+  <rect class="c-s1" x="250" y="322" width="430" height="228" rx="6"/>
+  <rect class="c-s2" x="274" y="352" width="116" height="22" rx="4"/>
+  <text class="t-mut" x="286" y="368" font-size="13">policy added</text>
+</g>
+      <g>
+  <rect class="c-s3" x="930" y="264" width="126" height="34" rx="6"/>
+  <text class="t-ink" x="946" y="286" font-size="15" font-weight="500">taste-skill</text>
+  <rect class="c-s2" x="930" y="290" width="420" height="250" rx="6"/>
+  <rect class="c-s1" x="930" y="312" width="420" height="228" rx="6"/>
+  <rect class="c-s2" x="954" y="342" width="116" height="22" rx="4"/>
+  <text class="t-mut" x="966" y="358" font-size="13">policy added</text>
+</g>
+      <rect class="c-s2" x="1040" y="384" width="120" height="44" rx="6"/>
+      <text class="t-ink" x="1056" y="412" font-size="17" font-weight="500">65 skills</text>
+      <g transform="rotate(-3 750 340)">
+        <rect class="c-f3" x="578" y="136" width="400" height="440" rx="4"/>
+        <rect class="c-paper" x="560" y="120" width="400" height="440" rx="4"/>
+        <rect class="c-ink" x="722" y="104" width="76" height="26" rx="5"/>
+        <rect class="c-ink" x="734" y="98" width="52" height="12" rx="4"/>
+        <text class="t-ink" x="584" y="176" font-size="19" font-weight="500">design-taste-frontend</text>
+        <text class="t-mut" x="584" y="200" font-size="13">Leonxlnx/taste-skill, MIT, 38 files</text>
+        <text class="t-med" x="584" y="248" font-size="14" font-weight="500">Medium</text><text class="t-ink" x="654" y="248" font-size="14">Launches a local browser</text>
+        <text class="t-mut" x="584" y="282" font-size="14">Low</text><text class="t-ink" x="654" y="282" font-size="14">Runs scripts inside the page</text>
+        <text class="t-mut" x="584" y="316" font-size="14">Low</text><text class="t-ink" x="654" y="316" font-size="14">Serves the project folder</text>
+        <text class="t-mut" x="584" y="350" font-size="14">Low</text><text class="t-ink" x="654" y="350" font-size="14">Sends search text out</text>
+        <text class="t-mut" x="584" y="384" font-size="14">Low</text><text class="t-ink" x="654" y="384" font-size="14">Writes a draw history</text>
+        <g transform="rotate(-7 760 470)">
+          <rect class="c-acc" x="620" y="436" width="280" height="68" rx="8"/>
+          <text class="t-bg" x="760" y="480" font-size="24" font-weight="500" text-anchor="middle">Import with notes</text>
+        </g>
+      </g>
+      <g transform="rotate(8 1120 150)">
+        <circle class="c-ink" cx="1120" cy="60" r="36"/>
+        <rect class="c-ink" x="1104" y="90" width="32" height="104" rx="6"/>
+        <rect class="c-accd" x="1030" y="190" width="180" height="22" rx="6"/>
+        <rect class="c-acc" x="1030" y="204" width="180" height="40" rx="6"/>
+      </g>
+      <clipPath id="lensclip"><circle cx="711" cy="252" r="58"/></clipPath>
+      <rect class="c-ink" x="744" y="288" width="26" height="130" rx="6" transform="rotate(-42 757 300)"/>
+      <rect class="c-acc" x="744" y="282" width="26" height="22" rx="4" transform="rotate(-42 757 300)"/>
+      <circle class="c-ink" cx="711" cy="252" r="70"/>
+      <circle class="c-glass" cx="711" cy="252" r="58"/>
+      <g clip-path="url(#lensclip)">
+        <g transform="translate(52 0) translate(711 252) scale(1.9) translate(-711 -252)"><g transform="rotate(-3 750 340)">
+          <text class="t-med" x="584" y="248" font-size="14" font-weight="500">Medium</text>
+          <text class="t-ink" x="654" y="248" font-size="14">Launches a local browser</text>
+        </g></g>
+      </g>
+      <g transform="rotate(-4 460 520)">
+        <rect class="c-acc" x="330" y="508" width="260" height="20" rx="4"/>
+        <polygon class="c-s1" points="590,508 640,518 590,528"/>
+        <polygon class="c-ink" points="628,515 640,518 628,521"/>
+        <rect class="c-accd" x="330" y="520" width="260" height="8" rx="4"/>
+      </g>
+    </svg>
+  </figure>
+  <p class="band-cap">Pictures on this page are drawn from the review process's own objects until photographs exist.</p>
+</section>
+
+<section class="sect" id="faq" aria-labelledby="h-faq">
+  <div class="faq rv">
+    <ul class="q-list" id="qs">
+      <li class="t"><h2 id="h-faq" style="font:400 18px/1.3 'Work Sans',system-ui,sans-serif;letter-spacing:0">Questions</h2></li>
+    </ul>
+    <div class="answer" id="ans" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="cta rv" aria-labelledby="h-cta">
+  <div class="tile a" aria-hidden="true"><svg class="draw" viewBox="0 0 260 360" preserveAspectRatio="xMidYMid slice">
+    <rect class="c-f1" width="260" height="360"/>
+    <rect class="c-f3" y="296" width="260" height="64"/>
+    <circle class="c-ink" cx="150" cy="56" r="34"/>
+    <rect class="c-ink" x="134" y="84" width="32" height="96" rx="6"/>
+    <rect class="c-accd" x="70" y="176" width="160" height="22" rx="6"/>
+    <rect class="c-acc" x="70" y="190" width="160" height="38" rx="6"/>
+    <g transform="rotate(-7 150 292)"><rect class="c-acc" x="52" y="262" width="196" height="60" rx="8"/><text class="t-bg" x="150" y="301" font-size="22" font-weight="500" text-anchor="middle">Merged</text></g>
+  </svg></div>
+  <div class="tile m">
+    <h2 id="h-cta">Add a skill the same way</h2>
+    <p>Run /add-skill with a pasted SKILL.md, a git URL or a path. The scan, the review and the policy come with it.</p>
+    <a class="btn" href="https://github.com/haitham-radman/my-project">Open the repository</a>
+  </div>
+  <div class="tile z" aria-hidden="true"><svg class="draw" viewBox="0 0 260 360" preserveAspectRatio="xMidYMid slice">
+    <rect class="c-f2" width="260" height="360"/>
+    <rect class="c-paper" x="-20" y="40" width="300" height="140" rx="4"/>
+    <text class="t-ink" x="14" y="104" font-size="20" font-weight="500">Ask before</text>
+    <text class="t-mut" x="14" y="132" font-size="15">any install or download</text>
+    <clipPath id="lc2"><circle cx="120" cy="236" r="62"/></clipPath>
+    <rect class="c-ink" x="152" y="270" width="28" height="110" rx="6" transform="rotate(-42 166 270)"/>
+    <circle class="c-ink" cx="120" cy="236" r="76"/>
+    <circle class="c-glass" cx="120" cy="236" r="62"/>
+    <g clip-path="url(#lc2)"><text class="t-ink" x="120" y="252" font-size="46" font-weight="500" text-anchor="middle">ask</text></g>
+  </svg></div>
+</section>
+</main>
+
+<footer class="foot">
+  <span>Claude Code skills, reviewed</span>
+  <nav><a href="#how">How it works</a><a href="#list">Skills</a><a href="#faq">Questions</a><a href="https://github.com/haitham-radman/my-project">Repository</a></nav>
+  <span>Pictures drawn. 2026</span>
+</footer>
+
+<script>
+(function(){
+  var D=[
+    ["It starts a headless Chrome with a throwaway profile and a loopback-only debug port. Your own profile and cookies are never touched.","Ask before running it on a remote or untrusted URL."],
+    ["It runs the skill's own measuring scripts inside the page being inspected. A remote page also runs its own code.","Ask before inspecting a remote or untrusted URL."],
+    ["For a local file it serves the project root to anything on localhost while the run lasts, so a .env in that folder would be readable.","Check the project root for secrets first."],
+    ["Only when you run the asset search. It sends the search text and a user agent to Openverse, Wikimedia, the Met and a few other open archives.","Ask before it runs and before any download. Keep private details out of queries."],
+    ["It keeps the last 24 draws in a file in the home folder and fails silently if it cannot write.","Say what gets written, and where."]
+  ];
+  var rows=document.querySelectorAll('#rows button'),det=document.getElementById('detail');
+  function show(i){
+    rows.forEach(function(b,k){b.setAttribute('aria-pressed',k==i)});
+    det.classList.add('swap');
+    setTimeout(function(){
+      det.innerHTML='<p><b>What it does.</b> '+D[i][0]+'</p><p class="policy"><b>Policy added.</b> '+D[i][1]+'</p>';
+      det.classList.remove('swap');
+    },150);
+  }
+  rows.forEach(function(b){b.addEventListener('click',function(){show(+b.dataset.i)})});
+
+  var G=[
+    {n:"Video",s:"Films and reels",r:[
+      ["hyperframes, general-video","HTML compositions rendered to video","Ask before cloud render or publish"],
+      ["remotion-best-practices and 11 more","React video, captions, maps, Lambda","Ask before installs or upgrades"],
+      ["onetake","One continuous take, rendered frame by frame","Ask before installs and model downloads"],
+      ["prep","Raw footage to a synced Premiere project","Ask before the bridge panel or MCP setup"],
+      ["raw-to-reel, reel-clone","Cut silences; copy a reel's format","Ask before installs or online generators"]]},
+    {n:"Design",s:"Pages and type",r:[
+      ["design-taste-frontend","Art direction with a browser inspector","Ask before asset search or remote URLs"],
+      ["impeccable","Design critique and polish","Ask before the first engine run"],
+      ["hallmark","Anti-slop pages and audits","No vendor imagery in output"],
+      ["taste-skill","Design tokens from any site","Ask before localhost or private addresses"],
+      ["ui-ux-pro-max, diagram-design","Style search; branded diagrams","Fonts load from Google by default"]]},
+    {n:"Research",s:"Data and sources",r:[
+      ["last30days","What people said in the last 30 days","Ask before any cookie read"],
+      ["scrapling","Web scraping","Ask before stealth mode or proxies"],
+      ["reverse-engineer-anything","Analyse apps and traffic","Ask before running targets"],
+      ["convert-documents-to-markdown","Office files and PDFs to Markdown","OCR only with your consent"],
+      ["notebooklm-mcp","Ask your NotebookLM notebooks","Ask before sign-in"]]},
+    {n:"Build",s:"Code and cloud",r:[
+      ["supabase","Postgres, auth and MCP guidance","Ask before SQL on a hosted project"],
+      ["deploy","Deploy to AWS","Ask before any resource change"],
+      ["jupyter-notebook","Scaffold notebooks","Ask before installs"],
+      ["humanizer","Remove AI tells from text","Shows a diff before writing"],
+      ["ponytail","Smallest change that solves it","Opt-in only"]]}
+  ];
+  var tabs=document.getElementById('tabs'),bands=document.getElementById('bands');
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+  function pick(i){
+    tabs.querySelectorAll('button').forEach(function(b,k){b.setAttribute('aria-selected',k==i)});
+    bands.innerHTML=G[i].r.map(function(r){return '<div class="band"><h3>'+esc(r[0])+'</h3><p>'+esc(r[1])+'</p><span class="gate">'+esc(r[2])+'</span></div>'}).join('');
+  }
+  G.forEach(function(g,i){
+    var b=document.createElement('button');b.setAttribute('role','tab');
+    b.innerHTML='<b>'+g.n+'</b><small>'+g.s+'</small>';
+    b.addEventListener('click',function(){pick(i)});tabs.appendChild(b);
+  });
+  pick(0);
+
+  var Q=[
+    ["Are skills changed from upstream?","Only by a short local policy section, plus a few pinned versions and path fixes. Each change is listed in the project notes so a refresh can reapply it."],
+    ["What does the review check?","What the skill runs, what it fetches at run time, what data leaves the machine and which credentials it touches. It ends in a verdict."],
+    ["What does a consent line mean?","The skill asks you before the risky step, such as an install, a download, a login or sending text to a third party."],
+    ["Can the review be wrong?","Yes. It is a read by an agent plus a scan, not a proof. Each report says what it only searched and did not read in full."],
+    ["How do I add one?","Run /add-skill with a pasted SKILL.md, a git URL or a path. It copies, validates, reviews, smoke-tests and opens a pull request."]
+  ];
+  var qs=document.getElementById('qs'),ans=document.getElementById('ans');
+  function sel(i){
+    qs.querySelectorAll('button').forEach(function(b,k){b.setAttribute('aria-selected',k==i)});
+    ans.classList.add('swap');
+    setTimeout(function(){ans.textContent=Q[i][1];ans.classList.remove('swap')},150);
+  }
+  Q.forEach(function(q,i){
+    var li=document.createElement('li'),b=document.createElement('button');
+    b.textContent=q[0];b.setAttribute('aria-selected','false');
+    ['click','mouseenter','focus'].forEach(function(e){b.addEventListener(e,function(){sel(i)})});
+    li.appendChild(b);qs.appendChild(li);
+  });
+  qs.querySelector('button').setAttribute('aria-selected','true');ans.textContent=Q[0][1];
+
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
+})();
+</script>
+</body>
+</html>
