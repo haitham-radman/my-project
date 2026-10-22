@@ -51,6 +51,10 @@ This wrote, in a test run: `CLAUDE.md`, `.gitignore`, `.mcp.json`, `.claude/sett
 
 Three Claude Code subagents (researcher, coder, tester; Haiku) built a small `slugify.js` with 10 `node:test` cases, run one after another from the host session; `node --test` passed 10/10 when re-run. Ruflo was only a ledger in that run: `agent spawn` and `swarm init` registered agents, but `swarm status` stayed all-idle with no tasks, because Ruflo did not drive or see the subagents. Registered agents also persist between runs (a second run showed 6, not 3), so `agent list` can overstate what is alive. `agent spawn` defaults to `--provider anthropic` and needs an API key of its own; the sandbox had none. Not tested: Ruflo driving agents through its MCP tools (a nested `claude -p` session was refused by the sandbox), model routing by complexity, and the savings claims.
 
+### Driving it through MCP
+
+Talking to `ruflo mcp start` over stdio as an MCP client (367 tools listed): `swarm_init`, `agent_spawn` (status `registered`) and `task_create` worked; `coordination_orchestrate` returned `status: scheduled, executor: none` and its own note says it records the request without executing it; `agent_execute` failed with "No LLM provider configured" (it calls the Anthropic Messages API and needs `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY` or `OLLAMA_API_KEY`; the sandbox had none). The task stayed `pending` at 0% afterwards. The server's own `agent_spawn` note lists the real execution paths: `agent_execute` with a key, Claude Code's Task tool, or `claude -p`. So Ruflo tracks and coordinates records; the work comes from Claude Code or from a provider key the user supplies. Do not describe Ruflo as running agents unless one of those paths ran. Not tested: `hive-mind_spawn`, `workflow_execute`, `agentdb_route` (routing), `terminal_execute` (arbitrary commands; needs consent), and the savings claims.
+
 ## Using it
 
 1. Confirm the setup above is in place. If not, offer it; do not start it.
