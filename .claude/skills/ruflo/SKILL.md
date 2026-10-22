@@ -55,6 +55,10 @@ Three Claude Code subagents (researcher, coder, tester; Haiku) built a small `sl
 
 Talking to `ruflo mcp start` over stdio as an MCP client (367 tools listed): `swarm_init`, `agent_spawn` (status `registered`) and `task_create` worked; `coordination_orchestrate` returned `status: scheduled, executor: none` and its own note says it records the request without executing it; `agent_execute` failed with "No LLM provider configured" (it calls the Anthropic Messages API and needs `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY` or `OLLAMA_API_KEY`; the sandbox had none). The task stayed `pending` at 0% afterwards. The server's own `agent_spawn` note lists the real execution paths: `agent_execute` with a key, Claude Code's Task tool, or `claude -p`. So Ruflo tracks and coordinates records; the work comes from Claude Code or from a provider key the user supplies. Do not describe Ruflo as running agents unless one of those paths ran. Not tested: `hive-mind_spawn`, `workflow_execute`, `agentdb_route` (routing), `terminal_execute` (arbitrary commands; needs consent), and the savings claims.
 
+### A second swarm run: keeping the ledger in step
+
+A repeat with a different task (`parseDuration`, 16 `node:test` cases; researcher, coder and tester subagents on Haiku from the host session, in sequence) passed 16/16 when re-run. This time the Ruflo record was kept up to date by hand: `ruflo task create` (the CLI has no `task complete`), then the MCP tool `task_complete` once the tests passed. `task_status` then read `completed`, progress 100, with the result text. Still not reflected without that manual step: `swarm_status` kept `taskCount: 0`, and `agent list` kept all three agents `idle`. So the task record is only as accurate as the call that updates it; do not read an `idle`/`pending` ledger as "nothing happened", or a `completed` one as "Ruflo did it". Steps that worked, in order: `swarm init`, `agent spawn` x3, `task create`, subagents, `task_complete` over MCP, `swarm stop`.
+
 ## Using it
 
 1. Confirm the setup above is in place. If not, offer it; do not start it.
