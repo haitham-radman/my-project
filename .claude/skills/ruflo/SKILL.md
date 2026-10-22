@@ -47,6 +47,10 @@ This wrote, in a test run: `CLAUDE.md`, `.gitignore`, `.mcp.json`, `.claude/sett
 - `.claude/settings.json` adds `Bash(npx @claude-flow*)` and `mcp__claude-flow__*` to `permissions.allow`; tell the user, and offer to remove them if they want every call prompted. It also turns on Claude Code Agent Teams (experimental).
 - Restart Claude Code in that folder so the settings and MCP server load; then `/mcp` shows `claude-flow`.
 
+## What a trial with real agents showed
+
+Three Claude Code subagents (researcher, coder, tester; Haiku) built a small `slugify.js` with 10 `node:test` cases, run one after another from the host session; `node --test` passed 10/10 when re-run. Ruflo was only a ledger in that run: `agent spawn` and `swarm init` registered agents, but `swarm status` stayed all-idle with no tasks, because Ruflo did not drive or see the subagents. Registered agents also persist between runs (a second run showed 6, not 3), so `agent list` can overstate what is alive. `agent spawn` defaults to `--provider anthropic` and needs an API key of its own; the sandbox had none. Not tested: Ruflo driving agents through its MCP tools (a nested `claude -p` session was refused by the sandbox), model routing by complexity, and the savings claims.
+
 ## Using it
 
 1. Confirm the setup above is in place. If not, offer it; do not start it.
