@@ -108,6 +108,13 @@ function drawPage(c, P, t, ctx) {
     const key = q.data && q.data.key, ki = key ? ln.indexOf(key) : -1, x0 = W / 2 - sw / 2;
     if (ki < 0) return TY.rise(c, ln, x0, sy, sp, so);
     const pre = ln.slice(0, ki), post = ln.slice(ki + key.length), wp = TY.width(c, pre, subSz, 'PuHui-Heavy'), wk = TY.width(c, key, subSz, 'PuHui-Heavy');
+    if (/[\u0600-\u06FF]/.test(ln)) {   // local patch (this repo): RTL line, lay out post | key | pre from left to right so the sentence reads right to left
+      const wpo = TY.width(c, post, subSz, 'PuHui-Heavy'), gap = subSz * 0.26;
+      if (post) TY.rise(c, post, x0, sy, sp, so);
+      TY.rise(c, key, x0 + wpo + (post ? gap : 0), sy, sp, { ...so, color: ctx.alpha ? (TP ? TP.accent : '#FFD23F') : accentOf(P.col) });
+      if (pre) TY.rise(c, pre, x0 + wpo + wk + gap * ((post ? 1 : 0) + 1), sy, sp, so);
+      return;
+    }
     if (pre) TY.rise(c, pre, x0, sy, sp, so); TY.rise(c, key, x0 + wp, sy, sp, { ...so, color: ctx.alpha ? (TP ? TP.accent : '#FFD23F') : accentOf(P.col) }); if (post) TY.rise(c, post, x0 + wp + wk, sy, sp, so);
   });
 }
