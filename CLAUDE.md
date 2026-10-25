@@ -12,6 +12,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - `.claude/settings.json` — registers both hooks.
 - `docs/` — static landing page (`index.html`, self-hosted Work Sans in `fonts/`, pictures drawn in inline SVG; no build, no network at load). The "81 skills" count is hand-written; update it when skills are added.
 - `studio/` — standalone browser video editor (static HTML/CSS/JS, no build). See `studio/README.md`.
+- `tools/skill-search/` — full-text search over `.claude/skills/*/SKILL.md`, no dependencies: `node tools/skill-search/cli.mjs -- <query>`. Query language: words (all must match), `"phrases"`, `-excluded`, `prefix*`, `name:`/`description:`/`body:` filters and `any:1`; ranked with BM25 per field. Modelled on Joplin's search and ported from `haitham-radman/learn` (`search/`). Its `SKILL.md` reader handles only `name` and `description`; it is not a YAML parser.
 
 ## Adding or updating a skill
 
@@ -71,6 +72,8 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 ## Tests
 
 Hook tests: `python3 -m unittest discover -s .claude/hooks` (5 tests, all pass).
+
+Skill search tests (Node's built-in runner): `node --test "tools/skill-search/*.test.mjs"` (29 tests, all pass). They read the real `.claude/skills/`, so adding a skill whose frontmatter lacks a `name` or `description` fails them.
 
 Studio decoder tests (Node's built-in runner, no dependencies): `node --test "studio/test/*.test.js"` (50 tests, all pass). `demux.test.js` and `reader.test.js` run in plain Node; `decode.test.js` drives headless Chromium through Playwright and skips itself when Playwright or a browser is missing (H.264 fixtures also skip where the browser cannot decode H.264). `studio/test/make-fixtures.js` regenerates `studio/test/fixtures/` and needs ffmpeg and ffprobe.
 
