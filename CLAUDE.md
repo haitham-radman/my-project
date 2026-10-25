@@ -10,7 +10,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - `.claude/hooks/session-start.sh` — installs Node 24 via nvm and the SkillSpector CLI (`uv tool install`, pinned to commit `95a52d8`, best effort) in cloud sessions.
 - `.claude/hooks/check-skill-frontmatter.py` — PostToolUse check on every edited `SKILL.md`; tests in `.claude/hooks/test_check_skill_frontmatter.py`.
 - `.claude/settings.json` — registers both hooks.
-- `docs/` — static landing page (`index.html`, self-hosted Work Sans in `fonts/`, pictures drawn in inline SVG; no build, no network at load). The "81 skills" count is hand-written; update it when skills are added.
+- `docs/` — static landing page (`index.html`, self-hosted Work Sans in `fonts/`, pictures drawn in inline SVG; no build, no network at load). The "89 skills" count is hand-written; update it when skills are added.
 - `studio/` — standalone browser video editor (static HTML/CSS/JS, no build). See `studio/README.md`.
 - `tools/skill-search/` — full-text search over `.claude/skills/*/SKILL.md`, no dependencies: `node tools/skill-search/cli.mjs -- <query>`. Query language: words (all must match), `"phrases"`, `-excluded`, `prefix*`, `name:`/`description:`/`body:` filters and `any:1`; ranked with BM25 per field. Modelled on Joplin's search and ported from `haitham-radman/learn` (`search/`). Its `SKILL.md` reader handles only `name` and `description`; it is not a YAML parser.
 
