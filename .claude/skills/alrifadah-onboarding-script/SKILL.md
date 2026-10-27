@@ -8,7 +8,7 @@ description: Write the script for a one-minute Al-Rifadah staff onboarding video
 One job: turn the facts the user gives into a one-minute script, ready to approve.
 
 ## My rules (fixed, from the user)
-- Company: الرفادة (Al-Rifadah, Arabic spelling الرفادة - TO CONFIRM with the user). Audience: new staff.
+- Company: الرفادة (Al-Rifadah, Arabic spelling الرفادة). Audience: new staff.
 - Length: exactly one minute. Spoken part: 110 to 130 words. Count them and say the number.
 - Spoken lines: Saudi dialect, warm, like a colleague welcoming you.
 - On-screen text: Modern Standard Arabic, short (at most 8 words per screen).
