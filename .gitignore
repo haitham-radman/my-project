@@ -4,3 +4,4 @@ mods/*/.claude-plugin/types/
 
 # Filled Al-Rifadah facts sheet (local only)
 .claude/alrifadah-facts.local.md
+.claude/alrifadah-answers.local.md
