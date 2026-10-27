@@ -22,7 +22,7 @@ One job: a correct, kind reply to one question, from approved answers only.
 4. Draft: greeting, thanks, the answer in short points, next step and who to contact (role), closing, signature `[الاسم، المسمى] - شركة الرفادة لخدمات الحجاج`.
 5. Run the arabic-proofread skill on the draft.
 6. Show: the draft, which entry it came from, and what is missing. Stop.
-7. Setup mode: when the user gives a new approved answer, show it as a block (template in `answers-template.md`) and save only after the user says yes. The file lives only in this session unless the user asks to commit it; commit only answers with no personal data.
+7. Setup mode: to build or review the list of approved answers from past questions, use the alrifadah-answers-builder skill. When the user gives a single new approved answer, show it as a block (template in `answers-template.md`) and save only after the user says yes. The file lives only in this session unless the user asks to commit it; commit only answers with no personal data.
 
 ## Good example 1
 Question: "أين أجد نموذج الإجازة؟" Entry found: location and form name, confirmed date.
