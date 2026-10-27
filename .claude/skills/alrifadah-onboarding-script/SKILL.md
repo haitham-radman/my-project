@@ -18,7 +18,7 @@ One job: turn the facts the user gives into a one-minute script, ready to approv
 - Never invent company facts (hours, policies, names, numbers, benefits). If a fact is missing, write `[ناقص: ...]` and list it at the end.
 
 ## Steps
-1. Ask for what is missing: who is the new employee group, what must they know on day one, which staff appear (name and role), any must-say sentence.
+1. Ask for what is missing: who is the new employee group, what must they know on day one, which staff appear (name and role), any must-say sentence. If the facts sheet has no company values for scene 2, use the alrifadah-about-us skill first.
    If the user says to continue with gaps, write the spoken lines without any fact that is missing (no markers in lines meant to be read aloud). Keep each gap marker only in the gaps list and in on-screen text drafts, and say that the spoken text is shorter than the 110-word target.
 2. Use this scene order unless the user gives another one (state that it is a default they can change): welcome (5 s), who we are (10 s), the first day (15 s), who to ask and where (15 s), closing welcome (15 s).
 3. Write a table: scene | seconds | spoken line (Saudi) | on-screen text (Modern Standard) | who appears.
