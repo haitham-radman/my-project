@@ -22,7 +22,7 @@ One job: turn an approved script into a video plan, then build it only after the
 4. Show the plan. Ask: "May I build it?" Wait.
 5. After yes, build with a video skill already installed here (ask which one if unsure). Save to a new file name, never overwrite.
 6. Check the result frame by frame: Arabic letters joined and right to left, only the three colors, 60 seconds, staff match the plan.
-7. Show the file path. Stop. Publishing is a separate yes.
+7. Run the alrifadah-caption-check skill on the result. Show the file path and its report. Stop. Publishing is a separate yes.
 
 ## Good example 1
 Plan row: `3 | 15 s | الموظف يستقبل الزميل عند المكتب | [اسم، دور] | الدوام يبدأ [ناقص: الوقت] | "تبدأ يومك من هنا" | أبيض خلفية، أحمر عنوان`
