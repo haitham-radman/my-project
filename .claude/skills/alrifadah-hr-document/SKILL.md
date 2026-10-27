@@ -1,6 +1,6 @@
 ---
 name: alrifadah-hr-document
-description: Draft a formal Al-Rifadah HR document in Modern Standard Arabic - letters, notices, policies, forms, summaries. Use when the user asks to write or prepare an HR document, formal letter, policy or form for Al-Rifadah that is kept on file. For a short note sent by email or chat use alrifadah-staff-message. Draft only; never signs, sends or files. Legal wording must be checked by the user.
+description: Draft a formal Al-Rifadah HR document in Modern Standard Arabic - letters, notices, policies, forms, summaries. Use when the user asks to write or prepare an HR document, formal letter, policy or form for Al-Rifadah that is kept on file. For a short note sent by email or chat use alrifadah-staff-message. For a new employee's day-one plan use alrifadah-day-one-plan. Draft only; never signs, sends or files. Legal wording must be checked by the user.
 ---
 
 # Al-Rifadah HR document
