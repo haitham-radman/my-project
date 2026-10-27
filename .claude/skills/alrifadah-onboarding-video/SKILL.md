@@ -10,7 +10,8 @@ One job: turn an approved script into a video plan, then build it only after the
 ## My rules (fixed, from the user)
 - Facts come from `.claude/alrifadah-facts.local.md` (see alrifadah-facts). Read it first; use only what it says; anything missing stays `[ناقص]`.
 - Full company name: شركة الرفادة لخدمات الحجاج (as written on the logo). Use it in documents, signatures and the first on-screen mention; the short form الرفادة is fine in spoken lines and warm messages.
-- One minute. Colors: red, black, white only. Ask once for the exact brand codes and logo file; until given, write `[ناقص: كود اللون الأحمر]`.
+- One minute. Colors: red, black, white only. Take the exact codes and the logo file from the facts sheet; if they are not there yet, ask once and write `[ناقص: كود اللون الأحمر]` until given.
+- Look (set by the user 2026-10-27): font Cairo (open license, files kept with the project); colors from the logo (red #a80713, black #000000, white #ffffff); the logo sits on a white card or a white screen, because its black parts disappear on black; scene 1 shows the full name; the last 5 seconds close on the logo; digits on screen are Western (9, 5).
 - Voice: Saudi. On-screen text: Modern Standard, right to left, large and readable.
 - Company staff appear. Before using any person's face, photo or voice, ask the user to confirm that person agreed. Never copy or clone a voice without that person's consent.
 - Never publish, upload, send or pay without the user's explicit yes, for each of these separately. Paid generation: show the cost first.
