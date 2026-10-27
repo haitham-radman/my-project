@@ -6,3 +6,4 @@
 - 2026-10-27: now reads facts from the alrifadah-facts sheet.
 - 2026-10-27: now runs alrifadah-caption-check on the result.
 - 2026-10-27: user approved. Added the hyperframes build notes (approved version, env flags, local animation library, local browser path, title at second 0, check and snapshots before render). Found while building the first daily video.
+- 2026-10-27: added scripts/add_voice.py (puts the recorded scene files on the silent video; 3 tests with generated tones). The user said they will add the voice themselves later.

@@ -22,6 +22,7 @@ One job: turn an approved script into a video plan, then build it only after the
 4. Show the plan. Ask: "May I build it?" Wait.
 5. After yes, build with a video skill already installed here (ask which one if unsure). Save to a new file name, never overwrite.
    With hyperframes: use only a CLI version the user approved, with `HYPERFRAMES_SKIP_SKILLS=1 HYPERFRAMES_NO_TELEMETRY=1 DO_NOT_TRACK=1 npm_config_ignore_scripts=true`. In cloud sessions the animation library's CDN is blocked, so keep a local copy of the file in the project and name the local browser with `HYPERFRAMES_BROWSER_PATH`. Put the title on screen at second 0, keep every scene slowly moving, run `check`, and look at snapshot frames before rendering.
+   Recorded voice (one file per scene, `scene1` to `scene5`): `python3 .claude/skills/alrifadah-onboarding-video/scripts/add_voice.py --video silent.mp4 --audio-dir recordings --out with-voice.mp4`. It places each file at its scene start, refuses a recording longer than its slot, never overwrites, and keeps the picture unchanged. The user can run it themselves.
 6. Check the result frame by frame: Arabic letters joined and right to left, only the three colors, 60 seconds, staff match the plan.
 7. Run the alrifadah-caption-check skill on the result. Show the file path and its report. Stop. Publishing is a separate yes.
 
