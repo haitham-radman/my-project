@@ -8,7 +8,7 @@ description: Make a one-page day-one plan for a new Al-Rifadah employee in forma
 One job: a clear one-page plan for one new employee, ready for the user to review.
 
 ## My rules (fixed, from the user)
-- Modern Standard Arabic, formal, right to left. Full company name شركة الرفادة in the header. Colors, if a file is made: red, black, white.
+- Modern Standard Arabic, formal, right to left. Full company name شركة الرفادة لخدمات الحجاج in the header. Colors, if a file is made: red, black, white.
 - Every fact (times, places, names, what to bring) comes from `.claude/alrifadah-facts.local.md` or from the user in this chat. Anything else stays `[ناقص: ...]`. Never invent times, rooms, names or policies.
 - People to meet: only staff listed in the facts sheet, by name and role. No private phone numbers; give the HR contact by role.
 - The new employee's name, role, start date and manager are private. Use them for this plan only. Do not save them to the facts sheet, any file in the repo, or git.
@@ -17,7 +17,7 @@ One job: a clear one-page plan for one new employee, ready for the user to revie
 ## Steps
 1. Ask for what the plan needs about this person: name, job title, start date, direct manager. Ask nothing the facts sheet already answers.
 2. Read the facts sheet. List the gaps that matter for day one (hours, address or entrance, first-day steps, people to meet).
-3. Build the plan with these parts: header (شركة الرفادة, "خطة اليوم الأول", name, title, start date, manager); schedule table (time | activity | with whom | where); people to meet (name, role); what to bring; first-week notes; HR contact by role; closing welcome line.
+3. Build the plan with these parts: header (شركة الرفادة لخدمات الحجاج, "خطة اليوم الأول", name, title, start date, manager); schedule table (time | activity | with whom | where); people to meet (name, role); what to bring; first-week notes; HR contact by role; closing welcome line.
 4. Check: nothing in the plan is missing from the sources; every gap is marked; no dialect; the name and date match what the user gave.
 5. Run the arabic-proofread skill.
 6. Show the plan and the gap list. Stop. A Word or PDF file is made only if the user asks.

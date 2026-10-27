@@ -8,7 +8,7 @@ description: Make an exit and handover checklist for an Al-Rifadah employee who 
 One job: a complete, ordered checklist for one departing employee, for HR to work through.
 
 ## My rules (fixed, from the user)
-- Formal Modern Standard Arabic. Header: شركة الرفادة, "قائمة إنهاء الخدمة والتسليم", employee name and title, last working day, manager.
+- Formal Modern Standard Arabic. Header: شركة الرفادة لخدمات الحجاج, "قائمة إنهاء الخدمة والتسليم", employee name and title, last working day, manager.
 - Items come from the company's own list: `.claude/alrifadah-facts.local.md` or what the user gives in this chat. If no company list exists, ask for it. Do not fill the list from general knowledge. The categories below are questions to ask, not facts.
 - Never state amounts, notice periods, end-of-service entitlements or legal duties. Those are `[ناقص: ...]` and need the user's, and legal or finance, confirmation.
 - Never ask for or write the reason for leaving unless the user gives it. Never write anything about discipline, health or disputes in the checklist; a person decides those.

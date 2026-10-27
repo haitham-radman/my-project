@@ -10,7 +10,7 @@ One job: find the mistakes the user usually fixes by hand, and report them.
 ## My rules (fixed, from the user)
 - Video length: 60 seconds. Colors: red, black, white only (exact codes in `.claude/alrifadah-facts.local.md`, see alrifadah-facts).
 - On-screen text: Modern Standard Arabic, right to left. Spoken voice may be Saudi.
-- Company name: الرفادة, full form شركة الرفادة in formal text.
+- Company name: full form شركة الرفادة لخدمات الحجاج in formal text and on the first on-screen mention; the short form الرفادة only in spoken lines.
 - Report only. Never edit, re-render, upload or send the video. Fixes happen after the user says yes, in the video skill.
 
 ## Steps

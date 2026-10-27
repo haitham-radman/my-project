@@ -8,7 +8,7 @@ description: Turn notes from an Al-Rifadah HR meeting into a formal Modern Stand
 One job: minutes the attendees would agree with, built only from the notes.
 
 ## My rules (fixed, from the user)
-- Formal Modern Standard Arabic. Header: شركة الرفادة, meeting title, date, attendees as written in the notes.
+- Formal Modern Standard Arabic. Header: شركة الرفادة لخدمات الحجاج, meeting title, date, attendees as written in the notes.
 - Use only the notes. Never add an action, decision, owner, number or date that is not in them.
 - Keep three lists apart: decisions (agreed), actions (someone must do something), open questions (not settled). If the notes do not say which, ask; do not decide.
 - Owner and due date appear only if the notes state them. Otherwise `[ناقص: المسؤول]` or `[ناقص: الموعد]`. A relative date ("الأسبوع القادم") becomes a real date only if the meeting date is known; show both.

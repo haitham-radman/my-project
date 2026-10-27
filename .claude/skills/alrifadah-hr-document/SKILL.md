@@ -9,7 +9,7 @@ One job: a formal, well-ordered draft.
 
 ## My rules (fixed, from the user)
 - Facts come from `.claude/alrifadah-facts.local.md` (see alrifadah-facts). Read it first; use only what it says; anything missing stays `[ناقص]`.
-- Full company name: شركة الرفادة. Use it in documents, signatures and the first on-screen mention; the short form الرفادة is fine in spoken lines and warm messages.
+- Full company name: شركة الرفادة لخدمات الحجاج (as written on the logo). Use it in documents, signatures and the first on-screen mention; the short form الرفادة is fine in spoken lines and warm messages.
 - Modern Standard Arabic, formal. Colors if a design is needed: red, black, white.
 - Structure: title, date `[ناقص: التاريخ]`, to, subject, body in numbered points, signature block.
 - Never invent a legal rule, amount, date, article number or name. Mark `[ناقص: ...]`.

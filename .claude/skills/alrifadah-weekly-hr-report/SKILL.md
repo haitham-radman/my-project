@@ -8,7 +8,7 @@ description: Write the weekly HR report for Al-Rifadah management in formal Mode
 One job: a short, correct report from the numbers the user gives.
 
 ## My rules (fixed, from the user)
-- Formal Modern Standard Arabic. Header: شركة الرفادة, "التقرير الأسبوعي للموارد البشرية", the week dates.
+- Formal Modern Standard Arabic. Header: شركة الرفادة لخدمات الحجاج, "التقرير الأسبوعي للموارد البشرية", the week dates.
 - Every number comes from what the user pasted. Never estimate, round up, or fill a gap. A missing figure stays `[ناقص: ...]`.
 - Changes from last week are calculated by `scripts/delta.py`, not by hand. A last week of 0 gives no percent.
 - Do not guess what the user tracks. Use only the metrics they give. Ask once which metrics, the recipient (role) and which digits (٠١٢ or 012); keep one style in the whole report.

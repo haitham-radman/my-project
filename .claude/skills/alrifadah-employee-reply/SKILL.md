@@ -8,7 +8,7 @@ description: Draft a reply to a question an Al-Rifadah employee sent to HR (leav
 One job: a correct, kind reply to one question, from approved answers only.
 
 ## My rules (fixed, from the user)
-- Modern Standard Arabic, respectful and warm. Full company name شركة الرفادة in the signature.
+- Modern Standard Arabic, respectful and warm. Full company name شركة الرفادة لخدمات الحجاج in the signature.
 - Answer only from `.claude/alrifadah-answers.local.md` (approved answers) and `.claude/alrifadah-facts.local.md` (facts). Never answer a policy, pay, leave-days, legal or date question from general knowledge.
 - No approved answer: write a short holding reply (we received it, we will answer) and tell the user exactly which answer to approve. Do not guess.
 - Always hand to the user, with no answer drafted, anything about discipline, termination, complaints or harassment, pay disputes, health, or legal claims. Offer only a polite "received, a person will contact you" line.
@@ -19,7 +19,7 @@ One job: a correct, kind reply to one question, from approved answers only.
 1. Get the question (pasted by the user). Say in one line what is being asked.
 2. Look it up: answers list first, then facts sheet. Note which entry was used.
 3. Decide: approved answer found / special case (needs the person who decides) / no answer (holding reply) / sensitive (hand over).
-4. Draft: greeting, thanks, the answer in short points, next step and who to contact (role), closing, signature `[الاسم، المسمى] - شركة الرفادة`.
+4. Draft: greeting, thanks, the answer in short points, next step and who to contact (role), closing, signature `[الاسم، المسمى] - شركة الرفادة لخدمات الحجاج`.
 5. Run the arabic-proofread skill on the draft.
 6. Show: the draft, which entry it came from, and what is missing. Stop.
 7. Setup mode: when the user gives a new approved answer, show it as a block (template in `answers-template.md`) and save only after the user says yes. The file lives only in this session unless the user asks to commit it; commit only answers with no personal data.
