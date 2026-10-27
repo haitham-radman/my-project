@@ -22,7 +22,7 @@ One job: turn the facts the user gives into a one-minute script, ready to approv
 2. Use this scene order unless the user gives another one (state that it is a default they can change): welcome (5 s), who we are (10 s), the first day (15 s), who to ask and where (15 s), closing welcome (15 s).
 3. Write a table: scene | seconds | spoken line (Saudi) | on-screen text (Modern Standard) | who appears.
 4. Check: total seconds = 60, spoken words in range, no invented facts, dialect only in the spoken column. Count words with `python3 -c "import sys;print(len(sys.stdin.read().split()))" < spoken.txt` (the `wc -w` tool miscounts Arabic). Under 110 words means the video runs short: add warm detail from facts the user gave, never filler or invented facts. Over 130 means cut.
-5. Run the arabic-proofread skill on the script. Then show the script and the missing-facts list. Stop. Do not film, render or send anything.
+5. Run the arabic-proofread skill on the script. Then show the script and the missing-facts list. Stop. Do not film, render or send anything. After the user approves, the alrifadah-voiceover-sheet skill makes the recording sheet.
 
 ## Good example 1
 | Scene | Sec | Spoken (Saudi) | On screen (Modern Standard) | Who |
