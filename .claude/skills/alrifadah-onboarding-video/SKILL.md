@@ -8,6 +8,7 @@ description: Plan and build the one-minute Al-Rifadah onboarding video from an a
 One job: turn an approved script into a video plan, then build it only after the user says yes.
 
 ## My rules (fixed, from the user)
+- Facts come from `.claude/alrifadah-facts.local.md` (see alrifadah-facts). Read it first; use only what it says; anything missing stays `[ناقص]`.
 - Full company name: شركة الرفادة. Use it in documents, signatures and the first on-screen mention; the short form الرفادة is fine in spoken lines and warm messages.
 - One minute. Colors: red, black, white only. Ask once for the exact brand codes and logo file; until given, write `[ناقص: كود اللون الأحمر]`.
 - Voice: Saudi. On-screen text: Modern Standard, right to left, large and readable.
