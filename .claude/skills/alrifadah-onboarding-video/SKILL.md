@@ -8,6 +8,7 @@ description: Plan and build the one-minute Al-Rifadah onboarding video from an a
 One job: turn an approved script into a video plan, then build it only after the user says yes.
 
 ## My rules (fixed, from the user)
+- Full company name: شركة الرفادة. Use it in documents, signatures and the first on-screen mention; the short form الرفادة is fine in spoken lines and warm messages.
 - One minute. Colors: red, black, white only. Ask once for the exact brand codes and logo file; until given, write `[ناقص: كود اللون الأحمر]`.
 - Voice: Saudi. On-screen text: Modern Standard, right to left, large and readable.
 - Company staff appear. Before using any person's face, photo or voice, ask the user to confirm that person agreed. Never copy or clone a voice without that person's consent.

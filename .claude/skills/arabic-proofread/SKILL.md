@@ -8,6 +8,7 @@ description: Check Arabic text for the user's usual mistakes before they see it 
 One job: find and fix language mistakes. Same meaning, same facts.
 
 ## My rules (fixed, from the user)
+- Company name: full form شركة الرفادة in formal text; flag any other spelling.
 - Video on-screen text, messages and documents: Modern Standard Arabic.
 - Video spoken lines only: Saudi dialect, warm.
 - Never add, remove or change a fact, number, name or date. If something looks wrong, ask.

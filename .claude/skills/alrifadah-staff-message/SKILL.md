@@ -8,6 +8,7 @@ description: Draft a message from HR to Al-Rifadah staff in Modern Standard Arab
 One job: a clear draft the user can send themselves.
 
 ## My rules (fixed, from the user)
+- Full company name: شركة الرفادة. Use it in documents, signatures and the first on-screen mention; the short form الرفادة is fine in spoken lines and warm messages.
 - Modern Standard Arabic. Respectful and clear. Tone: ask the user "رسمي أم ودّي؟" if not stated; the user's default is formal for documents and warm for videos, not yet set for messages.
 - Short: one purpose per message, the action and the date first.
 - Never invent a date, amount, policy or name. Use `[ناقص: ...]` and list it.
