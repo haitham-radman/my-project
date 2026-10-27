@@ -6,3 +6,4 @@
 - 2026-10-27: user confirmed the spelling الرفادة.
 - 2026-10-27: user gave the full company name شركة الرفادة; added to the rules.
 - 2026-10-27: now reads facts from the alrifadah-facts sheet.
+- 2026-10-27: points to alrifadah-voiceover-sheet after approval.
