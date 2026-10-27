@@ -19,7 +19,7 @@ One job: take today's video from nothing to a checked file, one approved step at
 3. **Script** (alrifadah-onboarding-script): one-minute script, Saudi spoken lines, Modern Standard on-screen text. Stop for approval.
 4. **Voice-over sheet** (alrifadah-voiceover-sheet): pace check and the reading sheet. Stop.
 5. **Video plan** (alrifadah-onboarding-video): scene plan and what is missing. Ask: "May I build it?" Wait.
-6. **Build**, only after the yes. New file name, never overwrite.
+6. **Build**, only after the yes. New file name, never overwrite. When the speaker's recordings arrive, run alrifadah-voice-intake before adding the voice.
 7. **Check** (alrifadah-caption-check): report on the result. Stop.
 8. **Today's summary:** files made (paths), what was checked, what is still open, what needs the user's yes next (fixes, publishing). End.
 
