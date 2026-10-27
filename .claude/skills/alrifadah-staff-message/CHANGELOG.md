@@ -5,3 +5,4 @@
 - 2026-10-27: user gave the full company name شركة الرفادة; added to the rules.
 - 2026-10-27: now reads facts from the alrifadah-facts sheet.
 - 2026-10-27: description points to alrifadah-employee-reply for replies to employee questions.
+- 2026-10-27: description points to alrifadah-recruiting-message for candidates.

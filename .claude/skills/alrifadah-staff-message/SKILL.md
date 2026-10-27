@@ -1,6 +1,6 @@
 ---
 name: alrifadah-staff-message
-description: Draft a message from HR to Al-Rifadah staff in Modern Standard Arabic - announcements, replies, reminders, requests. Use when the user asks to write, reply to or prepare a message, email or notice for an employee or group, sent by email or chat. For a formal letter, policy or form kept on file use alrifadah-hr-document. To answer a question an employee sent, use alrifadah-employee-reply. Produces a draft only; never sends it.
+description: Draft a message from HR to Al-Rifadah staff in Modern Standard Arabic - announcements, replies, reminders, requests. Use when the user asks to write, reply to or prepare a message, email or notice for an employee or group, sent by email or chat. For a formal letter, policy or form kept on file use alrifadah-hr-document. To answer a question an employee sent, use alrifadah-employee-reply. For job candidates use alrifadah-recruiting-message. Produces a draft only; never sends it.
 ---
 
 # Al-Rifadah staff message
