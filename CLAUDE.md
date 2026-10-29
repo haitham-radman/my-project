@@ -13,6 +13,7 @@ A library of Claude Code skills, plus the hooks and agents that maintain it. The
 - `docs/` — static landing page (`index.html`, self-hosted Work Sans in `fonts/`, pictures drawn in inline SVG; no build, no network at load). The "89 skills" count is hand-written; update it when skills are added.
 - `studio/` — standalone browser video editor (static HTML/CSS/JS, no build). See `studio/README.md`.
 - `lasso/` — static prompt-improver site (Arabic/English, rule-based, no build, no network). See `lasso/README.md`.
+- `.github/workflows/pages.yml` — deploys `lasso/` to GitHub Pages at the site root (and `docs/` under `/skills/`) on pushes to `main`; needs Settings > Pages > Source: GitHub Actions.
 - `tools/skill-search/` — full-text search over `.claude/skills/*/SKILL.md`, no dependencies: `node tools/skill-search/cli.mjs -- <query>`. Query language: words (all must match), `"phrases"`, `-excluded`, `prefix*`, `name:`/`description:`/`body:` filters and `any:1`; ranked with BM25 per field. Modelled on Joplin's search and ported from `haitham-radman/learn` (`search/`). Its `SKILL.md` reader handles only `name` and `description`; it is not a YAML parser.
 
 ## Adding or updating a skill
