@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lasso — حوّل البرومبت الكسول إلى برومبت ممتاز</title>
+<meta name="description" content="Lasso turns rough ideas into clear, structured prompts for ChatGPT, Claude and Gemini. Runs in your browser, nothing is uploaded.">
+<meta name="theme-color" content="#fffaf4">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <aside class="sidebar" id="sidebar" aria-label="Navigation">
+    <div class="side-top">
+      <a class="brand" href="#" id="brandLink">
+        <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><use href="#i-logo"/></svg>
+        <span>Lasso</span>
+      </a>
+      <button class="icon-btn side-close" id="sideClose" data-i18n-label="close" type="button"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-nav="home" type="button"><svg><use href="#i-plus"/></svg><span data-i18n="nav_new"></span></button>
+      <button class="nav-btn" data-nav="library" type="button"><svg><use href="#i-lib"/></svg><span data-i18n="nav_library"></span><em class="count" id="libCount" hidden></em></button>
+      <button class="nav-btn" data-nav="search" type="button"><svg><use href="#i-search"/></svg><span data-i18n="nav_search"></span></button>
+    </nav>
+    <div class="side-foot">
+      <button class="btn ghost wide" id="langBtn" type="button">English</button>
+      <p class="note" data-i18n="side_note"></p>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" data-i18n-label="menu" type="button"><svg><use href="#i-menu"/></svg></button>
+      <span class="brand small"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><use href="#i-logo"/></svg>Lasso</span>
+    </header>
+
+    <!-- HOME -->
+    <section class="view" id="viewHome">
+      <div class="hero">
+        <div class="sun" aria-hidden="true"></div>
+        <svg class="cloud c1" viewBox="0 0 80 32" aria-hidden="true"><use href="#i-cloud"/></svg>
+        <svg class="cloud c2" viewBox="0 0 80 32" aria-hidden="true"><use href="#i-cloud"/></svg>
+        <svg class="cloud c3" viewBox="0 0 80 32" aria-hidden="true"><use href="#i-cloud"/></svg>
+        <svg class="dunes" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 150 C 180 60 340 70 520 140 C 700 210 860 90 1200 60 L1200 220 L0 220Z" fill="url(#dune1)"/>
+          <path d="M0 190 C 200 120 420 190 640 170 C 860 150 1000 110 1200 150 L1200 220 L0 220Z" fill="url(#dune2)"/>
+        </svg>
+
+        <div class="hero-inner">
+          <button class="banner" id="banner" type="button"><span data-i18n="banner"></span><svg><use href="#i-chev"/></svg></button>
+          <h1 data-i18n="h1"></h1>
+          <p class="sub" data-i18n="sub"></p>
+
+          <div class="composer" id="composer">
+            <div class="pane" id="panePrompt">
+              <textarea id="input" rows="4" maxlength="6000" data-i18n-ph="ph_input"></textarea>
+            </div>
+            <div class="pane" id="paneTemplate" hidden>
+              <div class="tpl-grid">
+                <label><span data-i18n="f_role"></span><input id="tRole" type="text" data-i18n-ph="ph_role"></label>
+                <label><span data-i18n="f_audience"></span><input id="tAudience" type="text" data-i18n-ph="ph_audience"></label>
+                <label class="full"><span data-i18n="f_task"></span><textarea id="tTask" rows="2" data-i18n-ph="ph_task"></textarea></label>
+                <label class="full"><span data-i18n="f_context"></span><textarea id="tContext" rows="2" data-i18n-ph="ph_context"></textarea></label>
+                <label><span data-i18n="f_format"></span><input id="tFormat" type="text" data-i18n-ph="ph_format"></label>
+                <label><span data-i18n="f_tone"></span><input id="tTone" type="text" data-i18n-ph="ph_tone"></label>
+                <label class="full"><span data-i18n="f_rules"></span><textarea id="tRules" rows="2" data-i18n-ph="ph_rules"></textarea></label>
+              </div>
+            </div>
+            <div class="bar">
+              <label class="sel"><span data-i18n="type_label"></span>
+                <select id="typeSel"></select>
+              </label>
+              <label class="sel"><span data-i18n="model_label"></span>
+                <select id="modelSel"></select>
+              </label>
+              <span class="grow"></span>
+              <button class="send" id="sendBtn" type="button" data-i18n-label="generate"><svg><use href="#i-up"/></svg></button>
+            </div>
+          </div>
+
+          <div class="seg" role="tablist">
+            <button role="tab" class="on" id="tabPrompt" type="button"><svg><use href="#i-doc"/></svg><span data-i18n="tab_prompt"></span></button>
+            <button role="tab" id="tabTemplate" type="button"><svg><use href="#i-grid"/></svg><span data-i18n="tab_template"></span></button>
+          </div>
+          <p class="chip" data-i18n="privacy_chip"></p>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <section class="result" id="result" hidden aria-live="polite">
+        <div class="result-head">
+          <h2 data-i18n="result_title"></h2>
+          <div class="scores">
+            <div class="meter"><span data-i18n="score_before"></span><b id="sBefore">0</b></div>
+            <svg class="arrow"><use href="#i-arrow"/></svg>
+            <div class="meter good"><span data-i18n="score_after"></span><b id="sAfter">0</b></div>
+          </div>
+        </div>
+        <textarea id="output" spellcheck="false"></textarea>
+        <div class="chips" id="changes"></div>
+        <div class="actions">
+          <button class="btn primary" id="copyBtn" type="button"><svg><use href="#i-copy"/></svg><span data-i18n="copy"></span></button>
+          <button class="btn" id="saveBtn" type="button"><svg><use href="#i-save"/></svg><span data-i18n="save"></span></button>
+          <button class="btn" id="redoBtn" type="button"><svg><use href="#i-redo"/></svg><span data-i18n="regen"></span></button>
+          <span class="grow"></span>
+          <a class="btn ghost" id="openGpt" target="_blank" rel="noopener noreferrer">ChatGPT ↗</a>
+          <a class="btn ghost" id="openClaude" target="_blank" rel="noopener noreferrer">Claude ↗</a>
+        </div>
+        <p class="hint" data-i18n="open_hint"></p>
+      </section>
+
+      <section class="works">
+        <p class="eyebrow" data-i18n="works_with"></p>
+        <div class="logos"><span>ChatGPT</span><span>Claude</span><span>Gemini</span><span>Copilot</span><span>Llama</span><span>Mistral</span></div>
+      </section>
+
+      <!-- HOW -->
+      <section class="how">
+        <h2 data-i18n="how_title"></h2>
+        <ol class="steps">
+          <li><b>1</b><h3 data-i18n="how1_t"></h3><p data-i18n="how1_d"></p></li>
+          <li><b>2</b><h3 data-i18n="how2_t"></h3><p data-i18n="how2_d"></p></li>
+          <li><b>3</b><h3 data-i18n="how3_t"></h3><p data-i18n="how3_d"></p></li>
+        </ol>
+      </section>
+
+      <!-- DISCOVER -->
+      <section class="discover" id="discover">
+        <div class="disc-head">
+          <div>
+            <h2 data-i18n="disc_title"></h2>
+            <p class="muted" data-i18n="disc_sub"></p>
+          </div>
+          <label class="search"><svg><use href="#i-search"/></svg><input id="discSearch" type="search" data-i18n-ph="ph_search"></label>
+        </div>
+        <div class="tabs" id="roleTabs" role="tablist"></div>
+        <div id="discBody"></div>
+      </section>
+
+      <footer class="foot"><span data-i18n="foot"></span></footer>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="view" id="viewLibrary" hidden>
+      <div class="lib">
+        <div class="lib-head">
+          <h2 data-i18n="nav_library"></h2>
+          <label class="search"><svg><use href="#i-search"/></svg><input id="libSearch" type="search" data-i18n-ph="ph_search"></label>
+        </div>
+        <div id="libBody"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="dune1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd7b5"/><stop offset="1" stop-color="#fffaf4"/></linearGradient>
+    <linearGradient id="dune2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc79a"/><stop offset="1" stop-color="#fffaf4"/></linearGradient>
+    <symbol id="i-logo" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#e5702f"/><path d="M9 17c0-5 3.2-8.5 7.2-8.5 3.6 0 6.3 2.7 6.3 6.2 0 3.2-2.3 5.6-5.4 5.6-2.6 0-4.4-1.7-4.4-3.9 0-2 1.5-3.5 3.4-3.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M13.5 21.6 10 25.5l-1.2-2.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 80 32"><path d="M18 28a10 10 0 0 1-1-20 13 13 0 0 1 25-3 11 11 0 0 1 19 8 8 8 0 0 1 2 15z" fill="#fff" stroke="#e8d9cc" stroke-width="1.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-lib" viewBox="0 0 24 24"><path d="M5 4v16M10 4v16M15 5l4 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V6M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 14h6M14 18h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V6a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M19 8a8 8 0 1 0 1 6M19 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<script src="engine.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
