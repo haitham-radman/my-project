@@ -4,35 +4,35 @@
 - Corpus is ~32,715 words - fits in a single context window. You may not need a graph.
 
 ## Summary
-- 327 nodes · 658 edges · 20 communities (17 shown, 3 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.84)
+- 333 nodes · 681 edges · 20 communities (17 shown, 3 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 36 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - Skill Search CLI
 - Lasso Engine Tests
+- Studio App Core
 - Lasso Page Structure
 - Studio Demux Tests
-- Studio App Core
 - Frontmatter Hook
-- Studio Timeline UI
-- MP4 Demuxer
+- MP4/WebM Demuxer
 - Lasso App UI
-- Studio Playback
+- Studio Export
+- Studio Input Bindings
+- Studio Timeline UI
+- Studio Clips and Boot
 - Mods Hooks
 - Lasso Engine
-- Studio Captions
-- Studio Frame Seeking
+- Studio Zoom and Waveform
 - Studio Rendering
 - Mods Overview
-- Studio Text Clips
 - Session Start Hook
 
 ## God Nodes (most connected - your core abstractions)
-1. `init()` - 35 edges
-2. `commit()` - 21 edges
-3. `renderInspector()` - 19 edges
-4. `startFastExport()` - 19 edges
+1. `commit()` - 22 edges
+2. `renderInspector()` - 19 edges
+3. `startFastExport()` - 19 edges
+4. `exposeTestHook()` - 18 edges
 5. `renderAll()` - 17 edges
 6. `el()` - 14 edges
 7. `Reader` - 14 edges
@@ -70,65 +70,65 @@ Nodes (29): index, limit, query, skillsDir, bm25(), buildIndex(), FIELDS, FIELDS
 Cohesion: 0.06
 Nodes (22): assert, test, assert, FILES, fs, http, path, root (+14 more)
 
-### Community 2 - "Lasso Page Structure"
+### Community 2 - "Studio App Core"
+Cohesion: 0.10
+Nodes (24): afterChange(), autoCaption(), bindImport(), calibrateColor(), clipAudio(), decodeMedia(), elFor(), finishExport() (+16 more)
+
+### Community 3 - "Lasso Page Structure"
 Cohesion: 0.09
 Nodes (27): Lasso index.html, Composer (prompt/template panes), Discover section, Library view, Result section with scores and actions, Scripts engine.js, data.js, app.js, Lasso README, Discover starter prompts (data.js) (+19 more)
 
-### Community 3 - "Studio Demux Tests"
+### Community 4 - "Studio Demux Tests"
 Cohesion: 0.11
 Nodes (19): assert, block(), CONTAINERS, el(), expected, fs, FX, good (+11 more)
-
-### Community 4 - "Studio App Core"
-Cohesion: 0.13
-Nodes (17): clipEl(), computePeaks(), decodeMedia(), drawRuler(), drawWave(), finishExport(), importFiles(), importOne() (+9 more)
 
 ### Community 5 - "Frontmatter Hook"
 Cohesion: 0.13
 Nodes (5): check(), main(), parse(), CheckSkillFrontmatter, run_hook()
 
-### Community 6 - "Studio Timeline UI"
-Cohesion: 0.20
-Nodes (22): addMediaClip(), afterChange(), buildLanes(), chkRow(), colorRow(), commit(), dupSel(), el() (+14 more)
-
-### Community 7 - "MP4 Demuxer"
+### Community 6 - "MP4/WebM Demuxer"
 Cohesion: 0.18
 Nodes (7): boxes(), ByteSource, demuxMp4(), demuxWebm(), open(), parse(), Reader
 
-### Community 8 - "Lasso App UI"
+### Community 7 - "Lasso App UI"
 Cohesion: 0.27
 Nodes (18): applyLang(), copyText(), fillSelect(), generate(), grow(), h(), init(), paintResult() (+10 more)
 
-### Community 9 - "Studio Playback"
-Cohesion: 0.20
-Nodes (19): applyRes(), closeReaders(), concatBytes(), ensureAudio(), fitStage(), frame(), init(), ivfBytes() (+11 more)
+### Community 8 - "Studio Export"
+Cohesion: 0.21
+Nodes (18): closeReaders(), concatBytes(), ensureAudio(), exposeTestHook(), ivfBytes(), loadFfmpeg(), openExport(), pause() (+10 more)
 
-### Community 10 - "Mods Hooks"
+### Community 9 - "Studio Input Bindings"
+Cohesion: 0.19
+Nodes (13): applyRes(), bindKeyboard(), bindWindow(), buildTextPresets(), drawRuler(), dupSel(), fitStage(), init() (+5 more)
+
+### Community 10 - "Studio Timeline UI"
+Cohesion: 0.38
+Nodes (13): buildLanes(), cancelCaption(), captionSection(), chkRow(), colorRow(), commit(), el(), numRow() (+5 more)
+
+### Community 11 - "Studio Clips and Boot"
+Cohesion: 0.29
+Nodes (11): addMediaClip(), addText(), boot(), newClip(), newProject(), removeMedia(), renderAll(), renderBin() (+3 more)
+
+### Community 12 - "Mods Hooks"
 Cohesion: 0.22
 Nodes (3): EDIT_TOOLS, register(), weather()
 
-### Community 11 - "Lasso Engine"
+### Community 13 - "Lasso Engine"
 Cohesion: 0.50
 Nodes (8): cleanTask(), detectLang(), detectType(), enhance(), fromTemplate(), score(), section(), words()
 
-### Community 12 - "Studio Captions"
-Cohesion: 0.28
-Nodes (9): autoCaption(), cancelCaption(), captionSection(), clipAudio(), runAsr(), setCap(), srtFor(), toast() (+1 more)
-
-### Community 13 - "Studio Frame Seeking"
+### Community 14 - "Studio Zoom and Waveform"
 Cohesion: 0.29
-Nodes (8): calibrateColor(), elFor(), openReaders(), prepareFrames(), seekClip(), seekEl(), syncMedia(), wire()
+Nodes (7): bindControls(), clipEl(), computePeaks(), drawWave(), removeSel(), renderTimeline(), setZoom()
 
-### Community 14 - "Studio Rendering"
+### Community 15 - "Studio Rendering"
 Cohesion: 0.29
 Nodes (7): drawText(), drawVisual(), filterStr(), render(), roundRect(), visualSource(), wrapText()
 
-### Community 15 - "Mods Overview"
+### Community 16 - "Mods Overview"
 Cohesion: 0.40
 Nodes (4): Claude Code mods README, blast-radius mod, replay-theater mod, token-weather mod
-
-### Community 16 - "Studio Text Clips"
-Cohesion: 0.40
-Nodes (5): addText(), buildTextPresets(), newClip(), placeCaptions(), seek()
 
 ## Knowledge Gaps
 - **14 isolated node(s):** `NVM_DIR`, `Lasso README`, `Composer (prompt/template panes)`, `token-weather mod`, `blast-radius mod` (+9 more)
@@ -138,17 +138,17 @@ Nodes (5): addText(), buildTextPresets(), newClip(), placeCaptions(), seek()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `init()` connect `Studio Playback` to `Studio Text Clips`, `Studio App Core`, `Studio Captions`, `Studio Timeline UI`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Are the 11 inferred relationships involving `init()` (e.g. with `addMediaClip()` and `autoCaption()`) actually correct?**
-  _`init()` has 11 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 2 inferred relationships involving `commit()` (e.g. with `colorRow()` and `renderInspector()`) actually correct?**
+  _`commit()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `NVM_DIR`, `Lasso README`, `Composer (prompt/template panes)` to the rest of the system?**
   _14 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Skill Search CLI` be split into smaller, more focused modules?**
   _Cohesion score 0.09390243902439024 - nodes in this community are weakly interconnected._
-- **Are the 2 inferred relationships involving `commit()` (e.g. with `colorRow()` and `renderInspector()`) actually correct?**
-  _`commit()` has 2 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 15 inferred relationships involving `exposeTestHook()` (e.g. with `addMediaClip()` and `autoCaption()`) actually correct?**
+  _`exposeTestHook()` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Lasso Engine Tests` be split into smaller, more focused modules?**
   _Cohesion score 0.06258890469416785 - nodes in this community are weakly interconnected._
+- **Should `Studio App Core` be split into smaller, more focused modules?**
+  _Cohesion score 0.1028225806451613 - nodes in this community are weakly interconnected._
 - **Should `Lasso Page Structure` be split into smaller, more focused modules?**
   _Cohesion score 0.08620689655172414 - nodes in this community are weakly interconnected._
