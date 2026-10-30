@@ -47,4 +47,5 @@ node --test "studio/test/*.test.js"
 - `demux.test.js`: MP4/WebM parsing against golden sample tables (cross-checked with `ffprobe` when it is installed), B-frame reordering and edit lists, `co64`, multi-chunk `stsc`, hand-built WebM (unknown-size elements, BlockGroup key inference, lacing, TimecodeScale), refusal of fragmented/rotated/audio-only/garbage input, and `open()` never throwing on damaged files.
 - `reader.test.js`: the sequential frame reader against a fake `VideoDecoder` that reorders and delays output (frame choice, key-frame restarts, bounded open frames, error propagation).
 - `decode.test.js`: the same reader against the real `VideoDecoder` in headless Chromium (skips without Playwright or a browser).
+- `history.test.js`: the editor page in headless Chromium; the Undo and Redo buttons follow the history for button and keyboard changes (skips without Playwright or a browser).
 - Fixtures (160x90, 30 frames, frame N is flat gray 20 + 7*N so decoded pixels identify the frame) are committed; `node studio/test/make-fixtures.js` regenerates them.
