@@ -78,7 +78,7 @@ Skill search tests (Node's built-in runner): `node --test "tools/skill-search/*.
 
 Lasso engine tests: `node --test lasso/engine.test.js` (10 tests, all pass).
 
-Studio decoder tests (Node's built-in runner, no dependencies): `node --test "studio/test/*.test.js"` (50 tests, all pass). `demux.test.js` and `reader.test.js` run in plain Node; `decode.test.js` drives headless Chromium through Playwright and skips itself when Playwright or a browser is missing (H.264 fixtures also skip where the browser cannot decode H.264). `studio/test/make-fixtures.js` regenerates `studio/test/fixtures/` and needs ffmpeg and ffprobe.
+Studio decoder tests (Node's built-in runner, no dependencies): `node --test "studio/test/*.test.js"` (51 tests, all pass). `demux.test.js` and `reader.test.js` run in plain Node; `decode.test.js` and `history.test.js` (undo/redo buttons) drive headless Chromium through Playwright and skip themselves when Playwright or a browser is missing (H.264 fixtures also skip where the browser cannot decode H.264). `studio/test/make-fixtures.js` regenerates `studio/test/fixtures/` and needs ffmpeg and ffprobe.
 
 The only bundled skill suite is `ui-ux-pro-max`:
 
