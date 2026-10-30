@@ -1501,8 +1501,7 @@
   function renderAll() { renderTimeline(); renderInspector(); renderLabels(); draw(); }
 
   /* ---------- wiring ---------- */
-  function init() {
-    setIcons(); updatePlayBtn(); buildLanes(); buildTextPresets();
+  function bindControls() {
     $('#btnPlay').onclick = () => (S.playing ? pause() : play());
     $('#btnStart').onclick = () => seek(0);
     $('#btnEnd').onclick = () => seek(duration());
@@ -1520,6 +1519,9 @@
       $$('.tab').forEach((x) => x.classList.toggle('on', x === b));
       $('#tab-media').hidden = b.dataset.tab !== 'media'; $('#tab-text').hidden = b.dataset.tab !== 'text';
     }));
+  }
+
+  function bindImport() {
     const file = $('#file');
     file.onchange = () => { importFiles([...file.files]); file.value = ''; };
     const drop = $('#drop');
@@ -1530,7 +1532,9 @@
       if (ev === 'drop' && e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); importFiles([...e.dataTransfer.files]); }
       if (ev === 'drop' || !e.relatedTarget) drop.classList.remove('over');
     }));
+  }
 
+  function bindKeyboard() {
     document.addEventListener('keydown', (e) => {
       if (S.exporting) return;
       if (e.target.matches('input:not([type=range]):not([type=checkbox]), textarea, select')) return;
@@ -1549,18 +1553,31 @@
       else if (k === '+' || k === '=') setZoom(S.zoom * 1.3);
       else if (k === '-') setZoom(S.zoom / 1.3);
     });
+  }
+
+  function bindWindow() {
     window.addEventListener('resize', () => { fitStage(); drawRuler(); });
     new ResizeObserver(() => { fitStage(); drawRuler(); }).observe($('#stageBox'));
     window.addEventListener('beforeunload', (e) => { if (S.exporting) { e.preventDefault(); e.returnValue = ''; } });
+  }
 
+  function boot() {
     loadSaved().then((restored) => {
       applyRes(); renderBin(); hist = []; hi = -1; commit(); renderAll();
       if (restored && S.clips.length) toast('تمت استعادة آخر مشروع');
       raf = requestAnimationFrame(frame);
     });
+  }
 
-    // test / debugging hook
+  // test / debugging hook
+  function exposeTestHook() {
     window.__studio = { S, demuxOpen: (f) => Demux.open(f), pickWcConfig, loadFfmpeg, ivfBytes, wavBytes, setFfmpegBase: (b) => { FF.base = b; }, startFastExport, setAsrWorker: (u) => { asrUrl = u; }, autoCaption, srtFor, importFiles, addMediaClip, addText: () => addText(TEXT_PRESETS[0]), split, play, pause, seek, openExport, startExport, duration };
+  }
+
+  function init() {
+    setIcons(); updatePlayBtn(); buildLanes(); buildTextPresets();
+    bindControls(); bindImport(); bindKeyboard(); bindWindow();
+    boot(); exposeTestHook();
   }
   init();
 })();
