@@ -141,8 +141,8 @@
     $('#aspect').value = S.aspect; $('#projName').value = S.name;
     applyRes(); renderAll();
   }
-  function undo() { if (hi > 0) { restore(hist[--hi]); scheduleSave(); } }
-  function redo() { if (hi < hist.length - 1) { restore(hist[++hi]); scheduleSave(); } }
+  function undo() { if (hi > 0) { restore(hist[--hi]); afterChange(); scheduleSave(); } }
+  function redo() { if (hi < hist.length - 1) { restore(hist[++hi]); afterChange(); scheduleSave(); } }
   function afterChange() {
     $('#btnUndo').disabled = hi <= 0; $('#btnRedo').disabled = hi >= hist.length - 1;
   }
