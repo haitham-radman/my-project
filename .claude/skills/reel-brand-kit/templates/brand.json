@@ -1,0 +1,16 @@
+{
+  "colors": {
+    "background": null,
+    "text": null,
+    "highlight": null,
+    "accent": null
+  },
+  "fonts": {
+    "arabic": {"family": null, "file": null},
+    "latin": {"family": null, "file": null}
+  },
+  "logo": {"file": null, "position": null, "maxWidth": null},
+  "captions": {"fontSize": null, "maxLines": 2, "highlight": "word"},
+  "safe": {"top": 150, "bottom": 380, "left": 60, "right": 120},
+  "audio": {"peakMaxDb": -0.5, "meanMinDb": -30, "meanMaxDb": -10}
+}
