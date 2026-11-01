@@ -11,6 +11,11 @@ Primer reel real hecho con las skills de reels. Tema y llamada a la acción (ا�
 | `src/` | Proyecto Remotion (1080×1920, 30 fps, 900 fotogramas) | escrito, **no instalado ni renderizado** |
 | `post.md` | Descripción y hashtags para TikTok e Instagram | **borrador, no publicado** |
 
+## Decisiones del usuario en este reel
+
+- Subtítulos centrados verticalmente dentro de la zona segura (centro en y = 845 px de 1920), no pegados al borde inferior. Solo vale para este reel de solo texto: con metraje o una persona en pantalla, el centro taparía la cara; habría que volver a decidirlo.
+- Resaltado palabra por palabra, Cairo 72 px, marca de `reel-brand-kit`.
+
 ## Lo que falta
 
 - Voz: no hay grabación. Los tiempos de `captions.json` son estimados.

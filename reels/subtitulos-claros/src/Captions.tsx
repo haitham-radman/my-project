@@ -22,28 +22,38 @@ export const Captions = () => {
 
   return (
     <AbsoluteFill>
+      {/* Centrado vertical dentro de la zona segura (no de la pantalla entera). */}
       <div
-        dir="rtl"
-        lang="ar"
         style={{
           position: "absolute",
           left: SAFE.left,
           right: SAFE.right,
+          top: SAFE.top,
           bottom: SAFE.bottom,
-          maxWidth: CAPTION_MAX_WIDTH,
-          textAlign: "center",
-          textWrap: "balance",
-          fontFamily,
-          fontSize: BRAND.captions.fontSize,
-          lineHeight: 1.4,
-          opacity,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {words.map((w, i) => (
-          <span key={i} style={{display: "inline-block", margin: "0 8px", color: i === active ? BRAND.colors.highlight : BRAND.colors.text}}>
-            {w}
-          </span>
-        ))}
+        <div
+          dir="rtl"
+          lang="ar"
+          style={{
+            maxWidth: CAPTION_MAX_WIDTH,
+            textAlign: "center",
+            textWrap: "balance",
+            fontFamily,
+            fontSize: BRAND.captions.fontSize,
+            lineHeight: 1.4,
+            opacity,
+          }}
+        >
+          {words.map((w, i) => (
+            <span key={i} style={{display: "inline-block", margin: "0 8px", color: i === active ? BRAND.colors.highlight : BRAND.colors.text}}>
+              {w}
+            </span>
+          ))}
+        </div>
       </div>
     </AbsoluteFill>
   );
