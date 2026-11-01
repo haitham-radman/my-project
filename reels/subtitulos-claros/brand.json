@@ -1,0 +1,39 @@
+{
+  "colors": {
+    "background": "#101010",
+    "text": "#FFFFFF",
+    "highlight": "#FFD400",
+    "accent": null
+  },
+  "fonts": {
+    "arabic": {
+      "family": "Cairo",
+      "file": null
+    },
+    "latin": {
+      "family": null,
+      "file": null
+    }
+  },
+  "logo": {
+    "file": null,
+    "position": null,
+    "maxWidth": null
+  },
+  "captions": {
+    "fontSize": 72,
+    "maxLines": 2,
+    "highlight": "word"
+  },
+  "safe": {
+    "top": 150,
+    "bottom": 380,
+    "left": 60,
+    "right": 120
+  },
+  "audio": {
+    "peakMaxDb": -0.5,
+    "meanMinDb": -30,
+    "meanMaxDb": -10
+  }
+}
