@@ -7,3 +7,9 @@
 
 ## 2026-11-01 — v1.1
 - Integrada con `reel-setup` (plantilla con marca) y `reel-preflight` (`--brand`), con aprobación del usuario.
+
+## 2026-11-01 — v1.2 (valores confirmados por el usuario)
+- Confirmados: fondo `#101010`, texto `#FFFFFF`, resaltado `#FFD400`, fuente árabe Cairo, subtítulo de 72 px. Guardados en `templates/brand.json` (la plantilla es ahora su marca). Contrastes: 19,0:1 y 13,3:1.
+- `check`: 0 obligatorios pendientes, 0 errores; `emit` genera `brand.config.ts` (`googleFontsModule: "Cairo"`); `reel-preflight project` y `video --brand`: 0 FAIL, 0 WARN.
+- Tests: la prueba de "plantilla vacía" usa ahora un diccionario vacío propio y hay una prueba nueva que fija los valores confirmados (9 en total).
+- Sigue sin confirmar: acento, fuente latina, logo y posición; el modo de resaltado `word` es un valor de partida mío, no una decisión del usuario.

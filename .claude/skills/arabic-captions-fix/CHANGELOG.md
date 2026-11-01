@@ -7,3 +7,6 @@
 ## 2026-11-01 — v1.1
 - Prueba con un caso de reel (subtítulos con `split('')`, `nowrap`, 1920×1080): 1 error + 4 avisos antes, 0 después de aplicar la skill.
 - Fallo hallado en la 2.ª pasada: A4 (sin fuente árabe) avisaba en `Reel.tsx` aunque `Captions.tsx` cargaba Cairo. Ahora A4 se evalúa por proyecto, con prueba nueva (7 pruebas).
+
+## 2026-11-01 — v1.2
+- El usuario confirmó la marca (ver `reel-brand-kit`): fuente Cairo, texto `#FFFFFF` sobre `#101010`, resaltado `#FFD400`, 72 px. Se actualizan las dos notas "pendiente" de `SKILL.md`; sigue pendiente cómo se resalta (palabra o línea).

@@ -17,7 +17,8 @@ Una sola tarea: que la composición nazca con el formato correcto y con la zona 
 | Duración | 30 s = 900 fotogramas | confirmado |
 | Plataformas | TikTok e Instagram Reels | confirmado |
 | Zona segura (px) | arriba 150, abajo 380, izquierda 60, derecha 120 (valores de partida; con `brand.json` manda el archivo) | **pendiente de confirmar** |
-| Colores, logo, fuente | los guarda `reel-brand-kit` en `brand.json` | **pendiente de confirmar** |
+| Colores, fuente árabe, tamaño de subtítulo | fondo `#101010`, texto `#FFFFFF`, resaltado `#FFD400`, Cairo, 72 px (en `reel-brand-kit`) | confirmado |
+| Logo, fuente latina, acento | los guarda `reel-brand-kit` en `brand.json` | **pendiente de confirmar** |
 | Música y nivel de audio | — | **pendiente de confirmar** |
 
 Si una tarea necesita un valor pendiente, pregunta una vez, usa la respuesta y anótala aquí y en `CHANGELOG.md`. No lo inventes.

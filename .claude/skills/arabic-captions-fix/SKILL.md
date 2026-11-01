@@ -16,7 +16,7 @@ Una sola tarea: que el árabe de un reel salga conectado, en el orden correcto y
    - **A1 (error)**: nada de `split('')`, `Array.from(texto)` ni `[...texto]`. Divide por espacios y anima por palabra. Si hace falta animar por letra, usa `splitArabicLetters` de `arabic-text.md`.
    - **A2**: quita `letterSpacing` y `textTransform` del texto árabe.
    - **A3**: pon `dir="rtl"` y `lang="ar"` en el contenedor de las palabras.
-   - **A4**: carga una fuente árabe explícita (`@remotion/google-fonts/Cairo`, `IBMPlexSansArabic`, `NotoSansArabic` o `Tajawal`). Fuente definitiva del usuario: **pendiente de confirmar**.
+   - **A4**: carga una fuente árabe explícita (`@remotion/google-fonts/Cairo`, `IBMPlexSansArabic`, `NotoSansArabic` o `Tajawal`). Fuente confirmada por el usuario: **Cairo** (`@remotion/google-fonts/Cairo`).
    - **A5**: contenedor con `maxWidth` dentro de la zona segura (ver `reel-setup`), `whiteSpace: "normal"` y `textWrap: "balance"`; sin `nowrap`.
 4. Repite el linter hasta 0 errores y 0 avisos.
 5. Renderiza un fotograma y míralo (`npx remotion still`): letras unidas, primera palabra a la derecha, nada pegado al borde.
@@ -26,7 +26,7 @@ Una sola tarea: que el árabe de un reel salga conectado, en el orden correcto y
 - Árabe estándar simplificado (فصحى مبسطة), tono directo. No cambies las palabras del guion al corregir el formato.
 - Máximo dos líneas por subtítulo; frases largas se parten en páginas, no se reducen a letra pequeña.
 - Mezcla de árabe e inglés en una línea: marcas y cifras latinas dentro de su propio `span`.
-- Estilo exacto (color, tamaño, palabra resaltada): **pendiente de confirmar**. No lo inventes; pregunta una vez y anótalo en `CHANGELOG.md`.
+- Estilo confirmado (`reel-brand-kit`): texto `#FFFFFF` sobre `#101010`, resaltado `#FFD400`, 72 px. Cómo se resalta (palabra a palabra o línea) sigue **pendiente de confirmar**: no lo inventes; pregunta una vez y anótalo en `CHANGELOG.md`.
 
 ## Ejemplo correcto 1: palabra por palabra
 

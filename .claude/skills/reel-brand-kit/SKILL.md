@@ -7,11 +7,23 @@ description: Guardar y aplicar la marca de los reels del usuario (colores, fuent
 
 Una sola tarea: que los valores de marca vivan en un solo archivo, validados, y que el proyecto los lea de ahí. **Nunca inventes un valor de marca**: si falta, se pregunta.
 
+## Valores confirmados por el usuario (2026-11-01)
+
+| Campo | Valor | Contraste con el fondo |
+|---|---|---|
+| Fondo | `#101010` | — |
+| Texto | `#FFFFFF` | 19,0:1 |
+| Resaltado | `#FFD400` | 13,3:1 |
+| Fuente árabe | Cairo (`@remotion/google-fonts/Cairo`) | — |
+| Tamaño del subtítulo | 72 px | — |
+
+Siguen **sin confirmar** (opcionales): color de acento, fuente latina, logo y su posición, modo de resaltado (`word` es mi valor de partida, no una decisión del usuario), zona segura y umbrales de audio.
+
 ## Pasos
 
-1. Si el proyecto no tiene `brand.json`, copia `templates/brand.json` a la raíz del proyecto. Todo lo que se desconoce está en `null`.
+1. Si el proyecto no tiene `brand.json`, copia `templates/brand.json` a la raíz del proyecto: ya lleva los valores confirmados de arriba; lo que se desconoce está en `null`.
 2. Ejecuta `python3 .claude/skills/reel-brand-kit/scripts/brand.py check brand.json`. Lista lo `PENDIENTE` (obligatorio u opcional) y los `ERROR`.
-3. Pregunta al usuario **solo** por los obligatorios pendientes, en una sola pregunta agrupada: `colors.background`, `colors.text`, `colors.highlight`, `fonts.arabic.family`, `captions.fontSize`. Los opcionales (acento, fuente latina, logo) se preguntan si el reel los usa.
+3. Si queda algún obligatorio pendiente, pregunta al usuario **solo** por él, en una sola pregunta agrupada (los obligatorios son: `colors.background`, `colors.text`, `colors.highlight`, `fonts.arabic.family`, `captions.fontSize`). Los opcionales (acento, fuente latina, logo) se preguntan si el reel los usa.
 4. Escribe las respuestas en `brand.json`; repite `check` hasta 0 errores. El script comprueba formato `#RRGGBB`, contraste mínimo 4,5:1 de texto y resaltado contra el fondo, que la fuente árabe tenga letras árabes, que los archivos existan y que el logo quepa en la zona segura.
 5. Genera la configuración: `python3 .claude/skills/reel-brand-kit/scripts/brand.py emit brand.json --out src/brand.config.ts`. Se niega si queda un obligatorio pendiente y no sobrescribe sin `--force` (que solo se usa con permiso).
 6. En el código, importa `BRAND` y carga la fuente con `@remotion/google-fonts/<googleFontsModule>`; no escribas colores ni fuentes a mano. Después pasa `arabic-captions-fix` y `reel-preflight`.

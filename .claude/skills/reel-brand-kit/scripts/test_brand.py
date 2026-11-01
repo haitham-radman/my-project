@@ -13,7 +13,15 @@ FULL = {
     "safe": {"top": 150, "bottom": 380, "left": 60, "right": 120},
     "audio": {"peakMaxDb": -0.5, "meanMinDb": -30, "meanMaxDb": -10},
 }
-EMPTY = json.loads((Path(__file__).resolve().parents[1] / "templates" / "brand.json").read_text())
+EMPTY = {
+    "colors": {"background": None, "text": None, "highlight": None, "accent": None},
+    "fonts": {"arabic": {"family": None, "file": None}, "latin": {"family": None, "file": None}},
+    "logo": {"file": None, "position": None, "maxWidth": None},
+    "captions": {"fontSize": None, "maxLines": 2, "highlight": "word"},
+    "safe": {"top": 150, "bottom": 380, "left": 60, "right": 120},
+    "audio": {"peakMaxDb": -0.5, "meanMinDb": -30, "meanMaxDb": -10},
+}
+TEMPLATE = json.loads((Path(__file__).resolve().parents[1] / "templates" / "brand.json").read_text(encoding="utf-8"))
 
 
 def run(brand, base="."):
@@ -25,6 +33,14 @@ class Brand(unittest.TestCase):
         pending, problems, _ = run(EMPTY)
         self.assertEqual(problems, [])
         self.assertEqual(sum(1 for _, req in pending if req), len(b.REQUIRED))
+
+    def test_shipped_template_has_the_confirmed_brand_and_is_valid(self):
+        pending, problems, _ = run(TEMPLATE)
+        self.assertEqual([n for n, req in pending if req], [])
+        self.assertEqual(problems, [])
+        self.assertEqual((TEMPLATE["colors"]["background"], TEMPLATE["colors"]["text"], TEMPLATE["colors"]["highlight"]),
+                         ("#101010", "#FFFFFF", "#FFD400"))
+        self.assertEqual((TEMPLATE["fonts"]["arabic"]["family"], TEMPLATE["captions"]["fontSize"]), ("Cairo", 72))
 
     def test_full_is_valid(self):
         pending, problems, _ = run(FULL)
