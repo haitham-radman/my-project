@@ -11,8 +11,8 @@ Una sola tarea: del proyecto terminado a dos archivos de entrega correctos. **No
 
 1. Ejecuta `reel-preflight` en modo `project`. Si hay un FAIL, para y corrige antes de renderizar.
 2. Pide permiso para renderizar (consume CPU y puede tardar) y muestra el comando exacto:
-   `npx remotion render Reel out/reel.mp4 --codec=h264`
-   (`Reel` es el `id` de la composición. Si falta `@remotion/renderer` o Chrome, informa; no instales sin permiso.)
+   `npx remotion render Reel out/reel.mp4 --codec=h264 --pixel-format=yuv420p --image-format=png`
+   (`Reel` es el `id` de la composición. `--image-format=png` hace falta para obtener `yuv420p`: con JPEG sale `yuvj420p`. Si falta `@remotion/renderer` o Chrome, informa; no instales sin permiso.)
 3. Ejecuta `reel-preflight` en modo `video` sobre `out/reel.mp4` y mira la hoja de fotogramas.
 4. Elige un `slug` corto del tema (minúsculas y guiones) y ejecuta:
    `python3 .claude/skills/reel-export/scripts/export_reel.py out/reel.mp4 --slug <tema>`
