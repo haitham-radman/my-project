@@ -20,7 +20,7 @@ Una sola tarea: un borrador por plataforma, comprobado, que el usuario copia y p
 
 - Idioma: فصحى مبسطة, tono directo, sin dialecto. Árabe e inglés solo si el usuario lo pide.
 - Límites de partida: 2.200 caracteres y 5 hashtags por plataforma. Salen de fuentes secundarias de 2026; la referencia de Meta para desarrolladores aún lista 30 hashtags para Instagram. **Pendiente de confirmar** en la app (`--max-chars`, `--max-hashtags`).
-- Hashtags: 3 a 5, ni repetidos ni con espacios ni con tashkeel; usa `_` para unir palabras (`#تيك_توك`). Mezcla temáticos y de nicho. Cuáles usa el usuario habitualmente: **pendiente de confirmar**.
+- Hashtags: 3 a 5, ni repetidos ni con espacios ni con tashkeel; usa `_` para unir palabras (`#تيك_توك`). Mezcla temáticos y de nicho. Hashtags del usuario (confirmados): `#ترجمة_عربية #مونتاج #ريلز`; úsalos como base y no añadas otros sin preguntar. Si el tema es otro, pregunta si siguen valiendo.
 - Emojis, horario de publicación y si el primer comentario lleva hashtags: **pendientes de confirmar**.
 - Nada de promesas ("نتائج مضمونة") ni cifras sin dato (`10 أضعاف`). No menciones marcas ni personas que el usuario no haya nombrado.
 

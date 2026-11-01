@@ -9,7 +9,7 @@ Primer reel real hecho con las skills de reels. Tema y llamada a la acción (ا�
 | `captions.json` | Subtítulos con tiempos **estimados** | provisional: sustituir por los de la voz real |
 | `brand.json`, `src/brand.config.ts` | Marca del usuario | validada (`reel-brand-kit`) |
 | `src/` | Proyecto Remotion (1080×1920, 30 fps, 900 fotogramas) | instalado (Remotion 4.0.537, sin scripts de instalación) y **renderizado**: `npm run render` → `out/reel.mp4` (505 kB, H.264 `yuv420p`, 30,0 s, sin audio) |
-| `post.md` | Descripción y hashtags para TikTok e Instagram | **borrador, no publicado** |
+| `post.md` | Descripción para TikTok e Instagram; hashtags `#ترجمة_عربية #مونتاج #ريلز` confirmados por el usuario | **borrador, no publicado** |
 
 ## Decisiones del usuario en este reel
 

@@ -10,3 +10,6 @@
 
 ## 2026-11-01 — v1.1
 - Corregido el frontmatter: el `description` tenía un `:` sin comillas ("aprobación: nunca") y el YAML no era válido. Cambiado por punto y coma. Lección: pasar el hook de frontmatter y parar si falla, antes de commit.
+
+## 2026-11-01 — v1.2
+- Confirmados por el usuario: hashtags `#ترجمة_عربية #مونتاج #ريلز` (coinciden con los del borrador del primer reel). `SKILL.md` los usa como base. Siguen pendientes: emojis, horario y hashtags en el primer comentario.
