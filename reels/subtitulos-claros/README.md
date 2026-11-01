@@ -8,7 +8,7 @@ Primer reel real hecho con las skills de reels. Tema y llamada a la acción (ا�
 | `guion.md` | Guion de 30 s, 66 palabras, 14 subtítulos | comprobado (`reel-script-ar`, con 20 caracteres por línea) |
 | `captions.json` | Subtítulos con tiempos **estimados** | provisional: sustituir por los de la voz real |
 | `brand.json`, `src/brand.config.ts` | Marca del usuario | validada (`reel-brand-kit`) |
-| `src/` | Proyecto Remotion (1080×1920, 30 fps, 900 fotogramas) | escrito, **no instalado ni renderizado** |
+| `src/` | Proyecto Remotion (1080×1920, 30 fps, 900 fotogramas) | instalado (Remotion 4.0.537, sin scripts de instalación) y **renderizado**: `npm run render` → `out/reel.mp4` (505 kB, H.264 `yuv420p`, 30,0 s, sin audio) |
 | `post.md` | Descripción y hashtags para TikTok e Instagram | **borrador, no publicado** |
 
 ## Decisiones del usuario en este reel
@@ -20,8 +20,13 @@ Primer reel real hecho con las skills de reels. Tema y llamada a la acción (ا�
 
 - Voz: no hay grabación. Los tiempos de `captions.json` son estimados.
 - Metraje: el reel es solo texto sobre el fondo de marca y una barra de progreso.
-- Render: requiere `npm install` (Remotion 4.0.537 fijado en `package.json`) y la descarga de Chrome; se hace solo con permiso del usuario. Sin renderizar, la fuente Cairo no se ha cargado y el aspecto se comprobó con una aproximación (DejaVu Sans Bold).
+- Render: hecho una vez en el entorno de pruebas con el Chromium local (`--browser-executable`); `out/` no se sube a git. Con Cairo real el texto sale conectado y centrado. Para repetirlo: `npm install --ignore-scripts && npm run render` (en otra máquina, Remotion descarga Chrome).
+- Audio: el MP4 no tiene pista de audio; `reel-export` lo rechazará hasta que exista la voz, a propósito.
 - Publicación: la hace el usuario.
+
+## Nota de render
+
+Para obtener `yuv420p` hace falta `--image-format=png`: con las capturas JPEG por defecto el MP4 sale `yuvj420p` (rango completo) aunque se pida `--pixel-format=yuv420p`. Ya está en `package.json`.
 
 ## Comprobaciones
 

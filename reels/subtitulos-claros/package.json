@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "studio": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts Reel out/reel.mp4 --codec=h264"
+    "render": "remotion render src/index.ts Reel out/reel.mp4 --codec=h264 --pixel-format=yuv420p --image-format=png"
   },
   "dependencies": {
     "@remotion/cli": "4.0.537",
