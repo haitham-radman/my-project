@@ -41,6 +41,30 @@ class Preflight(unittest.TestCase):
                 "format": {"duration": "30.0"}}
         self.assertIn(("WARN", "sin pista de audio"), pf.check_video(info, None, None, A))
 
+    def test_brand_overrides_safe_and_audio(self):
+        import json, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d, "brand.json")
+            f.write_text(json.dumps({"safe": {"top": 100, "bottom": 300, "left": 50, "right": 90},
+                                     "audio": {"peakMaxDb": -2, "meanMinDb": -25, "meanMaxDb": -12}}))
+            a = Namespace(width=1080, height=1920, fps=30, seconds=30, safe=None)
+            self.assertIsNone(pf.load_brand(f, a))
+            self.assertEqual((a.safe, a.peak_max, a.mean_min, a.mean_max), ("100,300,50,90", -2, -25, -12))
+            info = {"streams": [{"codec_type": "video", "width": 1080, "height": 1920, "r_frame_rate": "30/1", "pix_fmt": "yuv420p"},
+                                {"codec_type": "audio"}], "format": {"duration": "30.0"}}
+            self.assertIn(("FAIL", "pico -1.0 dB: audio recortado"), pf.check_video(info, -18.0, -1.0, a))
+
+    def test_explicit_safe_beats_brand_and_bad_brand_errors(self):
+        import json, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d, "brand.json"); f.write_text(json.dumps({"safe": {"top": 1, "bottom": 2, "left": 3, "right": 4}}))
+            a = Namespace(safe="9,9,9,9")
+            pf.load_brand(f, a)
+            self.assertEqual(a.safe, "9,9,9,9")
+            self.assertIn("no se puede leer", pf.load_brand(Path(d, "nope.json"), Namespace(safe=None)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,8 +5,12 @@
   preflight.py video <archivo.mp4>      formato, duracion, audio
         [--sheet hoja.png]              hoja de fotogramas con la zona segura dibujada
 
+Con --brand brand.json (de reel-brand-kit) la zona segura y los umbrales de
+audio salen de ese archivo; --safe explicito tiene prioridad sobre la marca.
+
 Opciones comunes: --width 1080 --height 1920 --fps 30 --seconds 30
                   --safe 150,380,60,120   (arriba,abajo,izquierda,derecha; por confirmar)
+                  --brand brand.json
 Salida 1 si hay algun FAIL. Solo lee archivos; no renderiza ni sube nada.
 """
 import argparse
@@ -21,6 +25,7 @@ CHECKER = Path(__file__).resolve().parents[2] / "arabic-captions-fix" / "scripts
 LOUD_PEAK_DB = -0.5   # por encima: recorte
 QUIET_MEAN_DB = -30   # por debajo: demasiado bajo (valores de partida, por confirmar)
 LOUD_MEAN_DB = -10    # por encima: demasiado alto
+DEFAULT_SAFE = "150,380,60,120"  # por confirmar; brand.json lo sustituye
 
 
 def parse_compositions(text):
@@ -141,13 +146,16 @@ def check_video(info, mean, peak, a):
     elif mean is None:
         rows.append(("WARN", "no se pudo medir el volumen"))
     else:
-        if peak >= LOUD_PEAK_DB:
+        peak_max = getattr(a, "peak_max", LOUD_PEAK_DB)
+        mean_min = getattr(a, "mean_min", QUIET_MEAN_DB)
+        mean_max = getattr(a, "mean_max", LOUD_MEAN_DB)
+        if peak >= peak_max:
             rows.append(("FAIL", f"pico {peak} dB: audio recortado"))
         else:
             rows.append(("OK", f"pico {peak} dB"))
-        if mean < QUIET_MEAN_DB:
+        if mean < mean_min:
             rows.append(("WARN", f"volumen medio {mean} dB: muy bajo"))
-        elif mean > LOUD_MEAN_DB:
+        elif mean > mean_max:
             rows.append(("WARN", f"volumen medio {mean} dB: muy alto, puede tapar la voz"))
         else:
             rows.append(("OK", f"volumen medio {mean} dB"))
@@ -176,6 +184,23 @@ def contact_sheet(path, out, safe, a, n=6):
         sheet.save(out)
 
 
+def load_brand(path, a):
+    """Aplica safe y audio de brand.json a los argumentos. Devuelve un mensaje de error o None."""
+    try:
+        brand = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as ex:
+        return f"no se puede leer {path}: {ex}"
+    safe = brand.get("safe") or {}
+    vals = [safe.get(k) for k in ("top", "bottom", "left", "right")]
+    if a.safe is None and all(isinstance(v, int) and v >= 0 for v in vals):
+        a.safe = ",".join(str(v) for v in vals)
+    audio = brand.get("audio") or {}
+    for attr, key in (("peak_max", "peakMaxDb"), ("mean_min", "meanMinDb"), ("mean_max", "meanMaxDb")):
+        if isinstance(audio.get(key), (int, float)):
+            setattr(a, attr, audio[key])
+    return None
+
+
 def report(rows):
     for lv, msg in rows:
         print(f"[{lv:4}] {msg}")
@@ -193,9 +218,17 @@ def main(argv=None):
     ap.add_argument("--height", type=int, default=1920)
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--seconds", type=float, default=30)
-    ap.add_argument("--safe", default="150,380,60,120")
+    ap.add_argument("--safe", default=None)
+    ap.add_argument("--brand")
     ap.add_argument("--sheet")
     a = ap.parse_args(argv)
+    if a.brand:
+        err = load_brand(a.brand, a)
+        if err:
+            print(err)
+            return 2
+    if a.safe is None:
+        a.safe = DEFAULT_SAFE
     if a.mode == "project":
         return report(run_project(a.target, a))
     info = ffprobe(a.target)

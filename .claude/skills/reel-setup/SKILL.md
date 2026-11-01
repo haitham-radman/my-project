@@ -16,8 +16,8 @@ Una sola tarea: que la composición nazca con el formato correcto y con la zona 
 | fps | 30 | confirmado |
 | Duración | 30 s = 900 fotogramas | confirmado |
 | Plataformas | TikTok e Instagram Reels | confirmado |
-| Zona segura (px) | arriba 150, abajo 380, izquierda 60, derecha 120 | **pendiente de confirmar** |
-| Colores, logo, fuente | — | **pendiente de confirmar** |
+| Zona segura (px) | arriba 150, abajo 380, izquierda 60, derecha 120 (valores de partida; con `brand.json` manda el archivo) | **pendiente de confirmar** |
+| Colores, logo, fuente | los guarda `reel-brand-kit` en `brand.json` | **pendiente de confirmar** |
 | Música y nivel de audio | — | **pendiente de confirmar** |
 
 Si una tarea necesita un valor pendiente, pregunta una vez, usa la respuesta y anótala aquí y en `CHANGELOG.md`. No lo inventes.
@@ -25,7 +25,7 @@ Si una tarea necesita un valor pendiente, pregunta una vez, usa la respuesta y a
 ## Pasos
 
 1. Si no hay proyecto Remotion, pregunta antes de crearlo (`npx create-video` instala paquetes; la política del repo exige consentimiento).
-2. Copia `templates/reel.config.ts` a `src/reel.config.ts`.
+2. Si existe `src/brand.config.ts` (lo genera `reel-brand-kit`), copia `templates/reel.config.with-brand.ts` a `src/reel.config.ts`: la zona segura sale de la marca. Si no existe, copia `templates/reel.config.ts`.
 3. En `src/Root.tsx` usa la composición de `templates/Root.snippet.tsx`; no escribas `1920`, `1080` ni `24` a mano.
 4. Coloca los subtítulos con `SAFE`: el borde inferior del texto nunca por debajo de `HEIGHT - SAFE.bottom`, y `maxWidth` = `CAPTION_MAX_WIDTH`.
 5. Antes de seguir, ejecuta `python3 .claude/skills/reel-preflight/scripts/preflight.py project <carpeta-src>` y confirma que el formato sale OK.

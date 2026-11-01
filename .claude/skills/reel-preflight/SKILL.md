@@ -13,7 +13,8 @@ Una sola tarea: encontrar los fallos que el usuario suele corregir a mano, antes
    `python3 .claude/skills/reel-preflight/scripts/preflight.py project <carpeta-src>`
    Comprueba ancho, alto, fps y duración de cada `<Composition>` (resuelve constantes de `reel.config.ts`) y ejecuta el linter de `arabic-captions-fix`.
 2. **Vídeo** (después de renderizar):
-   `python3 .claude/skills/reel-preflight/scripts/preflight.py video <reel.mp4> --sheet <hoja.png>`
+   `python3 .claude/skills/reel-preflight/scripts/preflight.py video <reel.mp4> --sheet <hoja.png> [--brand brand.json]`
+   Con `--brand`, la zona segura y los umbrales de audio salen de `brand.json` (`reel-brand-kit`); un `--safe` explícito manda sobre la marca.
    Comprueba formato, duración, `yuv420p`, pico y volumen medio del audio, y crea una hoja de 6 fotogramas con la zona segura en rojo.
 3. **Mira la hoja** con la herramienta de lectura de imágenes. Busca: texto o subtítulo cruzando el borde rojo, letras árabes separadas, orden de palabras invertido, fotogramas vacíos. El script no puede detectar esto solo; hace falta mirar.
 4. Informa en una tabla: comprobación, resultado, qué cambiar. Cada FAIL se corrige en el proyecto (con `reel-setup` o `arabic-captions-fix`), nunca editando el vídeo final.
@@ -21,8 +22,8 @@ Una sola tarea: encontrar los fallos que el usuario suele corregir a mano, antes
 
 ## Reglas del usuario
 
-- Formato: 1080×1920, 30 fps, 30 s (±1 s). Zona segura por defecto `150,380,60,120` (**pendiente de confirmar**; se pasa con `--safe`).
-- Audio: los umbrales (pico máximo −0,5 dB; volumen medio entre −30 y −10 dB) son valores de partida, **pendientes de confirmar**. Un WARN de volumen no bloquea.
+- Formato: 1080×1920, 30 fps, 30 s (±1 s). Zona segura por defecto `150,380,60,120` (**pendiente de confirmar**; se pasa con `--safe` o `--brand`).
+- Audio: los umbrales (pico máximo −0,5 dB; volumen medio entre −30 y −10 dB) son valores de partida, **pendientes de confirmar**; `--brand` los sustituye. Un WARN de volumen no bloquea.
 - No des un reel por listo si queda un FAIL, y no digas "revisado" sin haber mirado la hoja.
 
 ## Ejemplo correcto 1: antes de renderizar
