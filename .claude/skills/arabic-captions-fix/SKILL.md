@@ -26,7 +26,7 @@ Una sola tarea: que el árabe de un reel salga conectado, en el orden correcto y
 - Árabe estándar simplificado (فصحى مبسطة), tono directo. No cambies las palabras del guion al corregir el formato.
 - Máximo dos líneas por subtítulo; frases largas se parten en páginas, no se reducen a letra pequeña.
 - Mezcla de árabe e inglés en una línea: marcas y cifras latinas dentro de su propio `span`.
-- Estilo confirmado (`reel-brand-kit`): texto `#FFFFFF` sobre `#101010`, resaltado `#FFD400`, 72 px. Cómo se resalta (palabra a palabra o línea) sigue **pendiente de confirmar**: no lo inventes; pregunta una vez y anótalo en `CHANGELOG.md`.
+- Estilo confirmado (`reel-brand-kit`): texto `#FFFFFF` sobre `#101010`, resaltado `#FFD400`, 72 px. Resaltado confirmado: **palabra por palabra** (la palabra que se dice se marca con `#FFD400`; ver el ejemplo 2).
 
 ## Ejemplo correcto 1: palabra por palabra
 
@@ -39,7 +39,7 @@ const words = text.split(" ");
 </div>
 ```
 
-## Ejemplo correcto 2: línea completa con palabra resaltada
+## Ejemplo correcto 2: línea completa con palabra resaltada (el estilo por defecto del usuario)
 
 ```tsx
 <p dir="rtl" lang="ar" style={{maxWidth: 840, textWrap: "balance", fontFamily: cairo}}>

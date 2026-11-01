@@ -16,8 +16,9 @@ Una sola tarea: que los valores de marca vivan en un solo archivo, validados, y 
 | Resaltado | `#FFD400` | 13,3:1 |
 | Fuente árabe | Cairo (`@remotion/google-fonts/Cairo`) | — |
 | Tamaño del subtítulo | 72 px | — |
+| Resaltado | palabra por palabra (`captions.highlight: "word"`) | — |
 
-Siguen **sin confirmar** (opcionales): color de acento, fuente latina, logo y su posición, modo de resaltado (`word` es mi valor de partida, no una decisión del usuario), zona segura y umbrales de audio.
+Siguen **sin confirmar** (opcionales): color de acento, fuente latina, logo y su posición, zona segura y umbrales de audio.
 
 ## Pasos
 

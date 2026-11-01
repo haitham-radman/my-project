@@ -10,3 +10,6 @@
 
 ## 2026-11-01 — v1.2
 - El usuario confirmó la marca (ver `reel-brand-kit`): fuente Cairo, texto `#FFFFFF` sobre `#101010`, resaltado `#FFD400`, 72 px. Se actualizan las dos notas "pendiente" de `SKILL.md`; sigue pendiente cómo se resalta (palabra o línea).
+
+## 2026-11-01 — v1.3
+- Confirmado por el usuario: resaltado palabra por palabra. Se actualiza la nota de `SKILL.md`; el ejemplo 2 (línea con la palabra activa resaltada) pasa a ser el estilo por defecto.

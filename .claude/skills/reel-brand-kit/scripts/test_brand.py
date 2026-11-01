@@ -40,7 +40,7 @@ class Brand(unittest.TestCase):
         self.assertEqual(problems, [])
         self.assertEqual((TEMPLATE["colors"]["background"], TEMPLATE["colors"]["text"], TEMPLATE["colors"]["highlight"]),
                          ("#101010", "#FFFFFF", "#FFD400"))
-        self.assertEqual((TEMPLATE["fonts"]["arabic"]["family"], TEMPLATE["captions"]["fontSize"]), ("Cairo", 72))
+        self.assertEqual((TEMPLATE["fonts"]["arabic"]["family"], TEMPLATE["captions"]["fontSize"], TEMPLATE["captions"]["highlight"]), ("Cairo", 72, "word"))
 
     def test_full_is_valid(self):
         pending, problems, _ = run(FULL)

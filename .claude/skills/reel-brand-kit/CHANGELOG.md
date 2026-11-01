@@ -13,3 +13,6 @@
 - `check`: 0 obligatorios pendientes, 0 errores; `emit` genera `brand.config.ts` (`googleFontsModule: "Cairo"`); `reel-preflight project` y `video --brand`: 0 FAIL, 0 WARN.
 - Tests: la prueba de "plantilla vacía" usa ahora un diccionario vacío propio y hay una prueba nueva que fija los valores confirmados (9 en total).
 - Sigue sin confirmar: acento, fuente latina, logo y posición; el modo de resaltado `word` es un valor de partida mío, no una decisión del usuario.
+
+## 2026-11-01 — v1.3
+- Confirmado el modo de resaltado: palabra por palabra (`captions.highlight: "word"`), que hasta ahora era un valor de partida. Prueba de plantilla ampliada. Sigue sin confirmar: acento, fuente latina, logo, zona segura y audio.
