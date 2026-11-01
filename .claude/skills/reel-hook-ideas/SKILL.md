@@ -23,7 +23,7 @@ Una sola tarea: varias aperturas distintas para el mismo tema, comprobadas, para
 ## Reglas del usuario
 
 - فصحى مبسطة, tono directo, segunda persona, verbo en las primeras palabras.
-- Máximo 8 palabras y 2 líneas de subtítulo (26 caracteres por línea es un valor de partida, **pendiente de confirmar**).
+- Máximo 8 palabras y 2 líneas de subtítulo (20 caracteres por línea, medido a 72 px; recalibrar con Cairo en un render real).
 - Sin "هل تعلم" ni "لن تصدق", sin "أسرار", sin promesas ("مضمون") ni cifras sin dato.
 - No digas que un gancho "funcionará mejor": sin datos del usuario (visualizaciones, retención) solo se puede juzgar claridad. Cuando existan datos de reels publicados, **pendiente de confirmar** cómo usarlos.
 - Estilo preferido de gancho y tipos que el usuario descarta: **pendiente de confirmar**.

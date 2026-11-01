@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Guion de reel en arabe: comprueba duracion y subtitulos, y genera captions.json (stdlib).
 
-  script_tool.py check script.md [--seconds 30] [--wps 2.3] [--max-chars 26]
-  script_tool.py captions script.md --out captions.json [--seconds 30] [--wps 2.3] [--max-chars 26] [--force]
+  script_tool.py check script.md [--seconds 30] [--wps 2.3] [--max-chars 20]
+  script_tool.py captions script.md --out captions.json [--seconds 30] [--wps 2.3] [--max-chars 20] [--force]
 
 Formato: cada linea no vacia es UN subtitulo (maximo 2 lineas visuales).
 Las lineas `## gancho`, `## desarrollo` y `## cierre` marcan secciones.
 `captions.json` sigue el tipo Caption de Remotion, con tiempos ESTIMADOS por
 numero de palabras: sustituyelos por los de la voz real cuando exista.
-Valores de partida por confirmar con el usuario: --wps 2.3, --max-chars 26.
+Valores por confirmar con el usuario: --wps 2.3 (valor de partida). --max-chars 20 sale de medir
+subtitulos a 72 px: con 26 pasaban frases que ocupaban 3 lineas; recalibrar con Cairo.
 """
 import argparse
 import json
@@ -80,7 +81,7 @@ def parse(text):
     return pages
 
 
-def check(pages, seconds=30, wps=2.3, max_chars=26):
+def check(pages, seconds=30, wps=2.3, max_chars=20):
     rows = []
     if not pages:
         return [("FAIL", "el guion esta vacio")], 0
@@ -145,7 +146,7 @@ def main(argv=None):
     ap.add_argument("script")
     ap.add_argument("--seconds", type=float, default=30)
     ap.add_argument("--wps", type=float, default=2.3)
-    ap.add_argument("--max-chars", type=int, default=26)
+    ap.add_argument("--max-chars", type=int, default=20)
     ap.add_argument("--out")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args(argv)

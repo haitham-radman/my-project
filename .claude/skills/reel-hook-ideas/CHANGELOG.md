@@ -6,3 +6,6 @@
 - Mejora de la 2.ª pasada: un `pregunta` sin ؟ o una `lista` sin número se colaban como correctos; ahora avisan.
 - Límite: no detecta registro dialectal cuando solo está en la sintaxis (p. ej. `ممكن يزيد`). La skill no mide ni predice rendimiento.
 - Pendiente de confirmar: estilo preferido de gancho, tipos descartados, uso de datos de reels publicados.
+
+## 2026-11-01 — v1.2
+- Aprobado por el usuario: `--max-chars` por defecto 26 -> 20, también en `check()`. Mismo motivo que en `reel-script-ar` (primer reel real, medido a 72 px). 1 prueba nueva (10 en total).

@@ -56,6 +56,10 @@ class Hooks(unittest.TestCase):
         self.assertIn("no lleva ؟", m)
         self.assertEqual(m.count("ningun numero"), 1)
 
+    def test_default_max_chars_is_20(self):
+        hooks, errs = ht.parse("pregunta | فالحروف المنفصلة تصعب القراءة على المشاهد؟")
+        self.assertTrue(any(lv == "FAIL" and "2 lineas" in m for lv, m in ht.check(hooks, errs, max_words=10)))
+
     def test_empty(self):
         self.assertTrue(any(lv == "FAIL" for lv, _ in ht.check([], [])))
 

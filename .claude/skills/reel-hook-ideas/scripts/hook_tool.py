@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Comprueba una lista de ganchos de reel en arabe (stdlib).
 
-  hook_tool.py check hooks.md [--max-words 8] [--max-chars 26]
+  hook_tool.py check hooks.md [--max-words 8] [--max-chars 20]
 
 Formato: una linea por gancho, `tipo | texto`. Tipos: pregunta, error,
 promesa, contraste, lista. Las lineas que empiezan por # o ( se ignoran.
@@ -55,7 +55,7 @@ def tokens(s, norm):
     return {norm(w) for w in s.split() if norm(w)}
 
 
-def check(hooks, errs, max_words=8, max_chars=26):
+def check(hooks, errs, max_words=8, max_chars=20):
     st, post = load("reel-script-ar", "script_tool.py"), load("reel-caption-post", "post_tool.py")
     rows = [("FAIL", f"linea {n}: {m}") for n, m in errs]
     if st is None or post is None:
@@ -112,7 +112,7 @@ def main(argv=None):
     ap.add_argument("cmd", choices=["check"])
     ap.add_argument("hooks")
     ap.add_argument("--max-words", type=int, default=8)
-    ap.add_argument("--max-chars", type=int, default=26)
+    ap.add_argument("--max-chars", type=int, default=20)
     a = ap.parse_args(argv)
     try:
         text = Path(a.hooks).read_text(encoding="utf-8")

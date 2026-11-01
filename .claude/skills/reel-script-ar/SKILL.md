@@ -27,7 +27,7 @@ Una sola tarea: de un tema a un guion hablado de 30 s, ya dividido en subtítulo
 - Sin tashkeel salvo que evite una ambigüedad real. Sin emojis en el texto hablado.
 - Marcas o términos en inglés (Remotion, TikTok) se dejan en letras latinas; el subtítulo los pone en su propio `span`.
 - Cifras: un solo tipo por guion. Tipo preferido (٣ o 3): **pendiente de confirmar**.
-- Ritmo: 2,3 palabras por segundo y 26 caracteres por línea son valores de partida, **pendientes de confirmar** con una grabación del usuario (`--wps`, `--max-chars`).
+- Ritmo: 2,3 palabras por segundo es un valor de partida, **pendiente de confirmar** con una grabación del usuario (`--wps`). 20 caracteres por línea (`--max-chars`) viene de medir subtítulos a 72 px: con 26 pasaban frases que en el render ocupaban 3 líneas; recalibrar con Cairo cuando haya un render real.
 - Tema habitual, público y llamada a la acción: **pendientes de confirmar**.
 - Nunca prometas resultados ("ganarás X") ni pongas datos inventados.
 

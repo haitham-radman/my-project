@@ -68,6 +68,12 @@ class Script(unittest.TestCase):
         self.assertLessEqual(caps[-1]["endMs"], 30000)
         self.assertEqual(set(caps[0]), {"text", "startMs", "endMs", "timestampMs", "confidence"})
 
+    def test_default_max_chars_catches_three_line_pages_measured_at_72px(self):
+        for t in ("فالحروف المنفصلة تصعب القراءة على المشاهد", "احفظ المنشور وراجع الخطوات قبل ريلك القادم",
+                  "الخطوة الثانية: اجعل الاتجاه من اليمين إلى اليسار"):
+            rows, _ = st.check([("desarrollo", t)])
+            self.assertTrue(any(lv == "FAIL" and "lineas" in m for lv, m in rows), t)
+
     def test_empty_and_overwrite(self):
         self.assertEqual(st.check([])[0][0][0], "FAIL")
         with tempfile.TemporaryDirectory() as d:

@@ -5,7 +5,7 @@ Primer reel real hecho con las skills de reels. Tema y llamada a la acción (ا�
 | Archivo | Qué es | Estado |
 |---|---|---|
 | `ganchos.md` | 6 ganchos; elegido: «اجعل ترجمتك العربية واضحة بثلاث خطوات» | comprobado (`reel-hook-ideas`) |
-| `guion.md` | Guion de 30 s, 66 palabras, 14 subtítulos | comprobado (`reel-script-ar`) |
+| `guion.md` | Guion de 30 s, 66 palabras, 14 subtítulos | comprobado (`reel-script-ar`, con 20 caracteres por línea) |
 | `captions.json` | Subtítulos con tiempos **estimados** | provisional: sustituir por los de la voz real |
 | `brand.json`, `src/brand.config.ts` | Marca del usuario | validada (`reel-brand-kit`) |
 | `src/` | Proyecto Remotion (1080×1920, 30 fps, 900 fotogramas) | escrito, **no instalado ni renderizado** |
