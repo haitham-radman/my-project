@@ -7,3 +7,6 @@
 - Fallo hallado en la 2.ª pasada: no señalaba "10 اضعاف", una afirmación con cifra sin dato. Nueva regla `CLAIM` (cifra + multiplicador/porcentaje, `مضمون`, `ضمان`) con prueba.
 - Pendiente de confirmar: hashtags habituales, emojis, horario, hashtags en primer comentario, idioma (árabe o árabe + inglés).
 - Límite: la regla de afirmaciones es heurística; no detecta todas las promesas.
+
+## 2026-11-01 — v1.1
+- Corregido el frontmatter: el `description` tenía un `:` sin comillas ("aprobación: nunca") y el YAML no era válido. Cambiado por punto y coma. Lección: pasar el hook de frontmatter y parar si falla, antes de commit.

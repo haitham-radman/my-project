@@ -1,6 +1,6 @@
 ---
 name: reel-caption-post
-description: Redactar el borrador de la descripción y los hashtags de un reel para TikTok e Instagram, en فصحى مبسطة y tono directo, y comprobar límite de caracteres, número de hashtags y afirmaciones sin verificar. Úsala cuando el usuario diga "descripción del reel", "caption", "hashtags", "texto para publicar", "اكتب وصف الريل", "هاشتاقات", "كابشن التيك توك". Solo deja un borrador para aprobación: nunca publica, programa ni envía nada.
+description: Redactar el borrador de la descripción y los hashtags de un reel para TikTok e Instagram, en فصحى مبسطة y tono directo, y comprobar límite de caracteres, número de hashtags y afirmaciones sin verificar. Úsala cuando el usuario diga "descripción del reel", "caption", "hashtags", "texto para publicar", "اكتب وصف الريل", "هاشتاقات", "كابشن التيك توك". Solo deja un borrador para aprobación del usuario; nunca publica, programa ni envía nada.
 ---
 
 # Descripción y hashtags de un reel
