@@ -1,6 +1,6 @@
 ---
 name: reel-preflight
-description: Revisión final de un reel antes de renderizar o entregar, para detectar formato incorrecto (no 1080×1920, 30 fps, 30 s), subtítulos árabes mal hechos, texto fuera de la zona segura de TikTok/Instagram y audio recortado o demasiado bajo. Úsala justo antes de `remotion render`, al terminar un montaje o cuando el usuario diga "revisa el reel", "está listo?", "antes de exportar", "QC", "راجع الريل", "فحص قبل التصدير". No arregla nada por sí sola y no sube ni publica.
+description: Revisión final de un reel antes de renderizar o entregar, para detectar formato incorrecto (no 1080×1920, 30 fps, 30 s), subtítulos árabes mal hechos, texto fuera de la zona segura de TikTok/Instagram y audio recortado o demasiado bajo. Úsala justo antes de `remotion render`, al terminar un montaje, al recibir una grabación de voz o cuando el usuario diga "revisa el reel", "está listo?", "antes de exportar", "QC", "راجع الريل", "فحص قبل التصدير". No arregla nada por sí sola y no sube ni publica.
 ---
 
 # Revisión antes de renderizar
@@ -16,9 +16,12 @@ Una sola tarea: encontrar los fallos que el usuario suele corregir a mano, antes
    `python3 .claude/skills/reel-preflight/scripts/preflight.py video <reel.mp4> --sheet <hoja.png> [--brand brand.json]`
    Con `--brand`, la zona segura y los umbrales de audio salen de `brand.json` (`reel-brand-kit`); un `--safe` explícito manda sobre la marca.
    Comprueba formato, duración, `yuv420p`, pico y volumen medio del audio, y crea una hoja de 6 fotogramas con la zona segura en rojo.
-3. **Mira la hoja** con la herramienta de lectura de imágenes. Busca: texto o subtítulo cruzando el borde rojo, letras árabes separadas, orden de palabras invertido, fotogramas vacíos. El script no puede detectar esto solo; hace falta mirar.
-4. Informa en una tabla: comprobación, resultado, qué cambiar. Cada FAIL se corrige en el proyecto (con `reel-setup` o `arabic-captions-fix`), nunca editando el vídeo final.
-5. Repite hasta 0 FAIL. Los WARN se explican al usuario y decide él.
+3. **Audio** (grabación de voz, antes de montarla):
+   `python3 .claude/skills/reel-preflight/scripts/preflight.py audio <voz.m4a> --lines 14 --brand brand.json [--segments]`
+   `--lines` es el número de líneas del guion. Comprueba: duración (entre 3 s menos y 1 s más que `--seconds`), pico y volumen medio (con los umbrales de la marca), y cuenta los fragmentos de voz (umbral adaptativo sobre el suelo de ruido) contra las líneas. Avisa de fragmentos demasiado cortos y de pausas menores de 0,25 s, que impiden alinear los subtítulos. `--segments` lista cada fragmento con su pausa previa. No transcribe ni oye: dice si la toma encaja con el guion, no qué dice.
+4. **Mira la hoja** con la herramienta de lectura de imágenes. Busca: texto o subtítulo cruzando el borde rojo, letras árabes separadas, orden de palabras invertido, fotogramas vacíos. El script no puede detectar esto solo; hace falta mirar.
+5. Informa en una tabla: comprobación, resultado, qué cambiar. Cada FAIL se corrige en el proyecto (con `reel-setup` o `arabic-captions-fix`), nunca editando el vídeo final.
+6. Repite hasta 0 FAIL. Los WARN se explican al usuario y decide él.
 
 ## Reglas del usuario
 

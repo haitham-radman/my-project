@@ -8,3 +8,8 @@
 
 ## 2026-11-01 — v1.1 (aprobado por el usuario)
 - Nueva opción `--brand brand.json`: la zona segura y los umbrales de audio salen de la marca; `--safe` explícito tiene prioridad; un `brand.json` ilegible da error (código 2). 2 pruebas nuevas (9 en total).
+
+## 2026-11-01 — v1.2 (aprobado por el usuario)
+- Nuevo modo `audio` (`preflight.py audio voz.m4a --lines N`): duración, pico y volumen medio (umbrales de la marca), fragmentos de voz contra líneas del guion, fragmentos demasiado cortos y pausas insuficientes. 7 pruebas nuevas (16 en total).
+- Origen: la primera grabación real del usuario (16,2 s, 8,9 s de voz en 10 fragmentos, −31,1 dB de media) se analizó a mano; el modo reproduce ese resultado (1 FAIL, 2 WARN). Pruebas con tomas sintéticas: correcta 0/0; saturada FAIL de pico; sin pausas FAIL de duración y WARN de fragmentos.
+- Límite: no transcribe ni "escucha". Detecta voz por energía; un ruido fuerte o una voz muy baja puede contarse mal.

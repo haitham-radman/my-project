@@ -3,7 +3,12 @@
 
   preflight.py project <src>            composicion Remotion + linter de arabe
   preflight.py video <archivo.mp4>      formato, duracion, audio
+  preflight.py audio <voz.m4a>          grabacion de voz: duracion, nivel y fragmentos
+        [--lines 14]                    lineas del guion (un fragmento de voz por linea)
         [--sheet hoja.png]              hoja de fotogramas con la zona segura dibujada
+
+En modo audio la duracion debe estar entre --seconds -3 y +1 y se cuentan los
+fragmentos de voz (umbral adaptativo sobre el suelo de ruido) contra --lines.
 
 Con --brand brand.json (de reel-brand-kit) la zona segura y los umbrales de
 audio salen de ese archivo; --safe explicito tiene prioridad sobre la marca.
@@ -15,6 +20,8 @@ Salida 1 si hay algun FAIL. Solo lee archivos; no renderiza ni sube nada.
 """
 import argparse
 import json
+import math
+import struct
 import re
 import subprocess
 import sys
@@ -201,6 +208,73 @@ def load_brand(path, a):
     return None
 
 
+def pcm_db(path, frame_ms=20):
+    """Nivel en dBFS por trama de 20 ms (decodifica con ffmpeg a mono 16 kHz)."""
+    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(path), "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
+                       capture_output=True)
+    if r.returncode or not r.stdout:
+        raise SystemExit(f"ffmpeg no pudo leer el audio: {r.stderr.decode(errors='ignore').strip()}")
+    n = len(r.stdout) // 2
+    samples = struct.unpack(f"<{n}h", r.stdout[: n * 2])
+    fr = 16 * frame_ms
+    return [20 * math.log10((math.sqrt(sum(x * x for x in samples[i:i + fr]) / fr) or 1) / 32768)
+            for i in range(0, n - fr + 1, fr)], frame_ms / 1000
+
+
+def voice_segments(db, step, margin_db=8, merge_s=0.15, min_s=0.12):
+    """Fragmentos de voz [(inicio, fin)] con umbral = suelo de ruido (p10) + margen."""
+    if not db:
+        return [], None
+    floor = sorted(db)[int(0.10 * (len(db) - 1))]
+    thr = floor + margin_db
+    seg, cur = [], None
+    for i, v in enumerate(db):
+        t = i * step
+        if v > thr:
+            cur = [t, t] if cur is None else [cur[0], t]
+        elif cur is not None and t - cur[1] > merge_s:
+            seg.append(tuple(cur))
+            cur = None
+    if cur:
+        seg.append(tuple(cur))
+    return [(a, b + step) for a, b in seg if b - a >= min_s], floor
+
+
+def check_audio(dur, mean, peak, segs, a, lines=14):
+    rows = []
+    lo, hi = a.seconds - 3, a.seconds + 1
+    if dur > hi or dur < lo:
+        rows.append(("FAIL", f"duracion {dur:.1f} s, debe estar entre {lo:g} y {hi:g} s"
+                     + (": faltan lineas o se leyo muy deprisa" if dur < lo else ": no cabe en el reel")))
+    else:
+        rows.append(("OK", f"duracion {dur:.1f} s"))
+    peak_max = getattr(a, "peak_max", LOUD_PEAK_DB)
+    mean_min = getattr(a, "mean_min", QUIET_MEAN_DB)
+    mean_max = getattr(a, "mean_max", LOUD_MEAN_DB)
+    if mean is None:
+        rows.append(("WARN", "no se pudo medir el volumen"))
+    else:
+        rows.append(("FAIL", f"pico {peak} dB: audio recortado") if peak >= peak_max else ("OK", f"pico {peak} dB"))
+        if mean < mean_min:
+            rows.append(("WARN", f"volumen medio {mean} dB: muy bajo (minimo {mean_min:g}); acerca el microfono"))
+        elif mean > mean_max:
+            rows.append(("WARN", f"volumen medio {mean} dB: muy alto (maximo {mean_max:g})"))
+        else:
+            rows.append(("OK", f"volumen medio {mean} dB"))
+    n = len(segs)
+    voice = sum(b - a_ for a_, b in segs)
+    rows.append(("OK" if abs(n - lines) <= 2 else "WARN",
+                 f"{n} fragmentos de voz para {lines} lineas" + ("" if abs(n - lines) <= 2 else " (deberia haber uno por linea, separados por pausas)")))
+    short = sum(1 for a_, b in segs if b - a_ < 0.4)
+    if short > 2:
+        rows.append(("WARN", f"{short} fragmentos de menos de 0,4 s: demasiado cortos para una linea entera"))
+    pauses = sorted(segs[i + 1][0] - segs[i][1] for i in range(len(segs) - 1))
+    if pauses and pauses[len(pauses) // 2] < 0.25:
+        rows.append(("WARN", f"pausa tipica de {pauses[len(pauses) // 2]:.2f} s entre fragmentos: demasiado corta para alinear los subtitulos"))
+    rows.append(("OK", f"voz {voice:.1f} s de {dur:.1f} s ({100 * voice / dur:.0f} %)"))
+    return rows
+
+
 def report(rows):
     for lv, msg in rows:
         print(f"[{lv:4}] {msg}")
@@ -212,7 +286,7 @@ def report(rows):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("mode", choices=["project", "video"])
+    ap.add_argument("mode", choices=["project", "video", "audio"])
     ap.add_argument("target")
     ap.add_argument("--width", type=int, default=1080)
     ap.add_argument("--height", type=int, default=1920)
@@ -220,6 +294,8 @@ def main(argv=None):
     ap.add_argument("--seconds", type=float, default=30)
     ap.add_argument("--safe", default=None)
     ap.add_argument("--brand")
+    ap.add_argument("--lines", type=int, default=14)
+    ap.add_argument("--segments", action="store_true", help="en modo audio, lista los fragmentos")
     ap.add_argument("--sheet")
     a = ap.parse_args(argv)
     if a.brand:
@@ -233,6 +309,16 @@ def main(argv=None):
         return report(run_project(a.target, a))
     info = ffprobe(a.target)
     mean, peak = volume(a.target)
+    if a.mode == "audio":
+        db, step = pcm_db(a.target)
+        segs, floor = voice_segments(db, step)
+        rows = check_audio(float(info["format"]["duration"]), mean, peak, segs, a, a.lines)
+        if a.segments:
+            prev = 0
+            for x, y in segs:
+                rows.append(("OK", f"  {x:5.2f}-{y:5.2f} s ({y - x:4.2f} s), pausa previa {x - prev:4.2f} s"))
+                prev = y
+        return report(rows)
     rows = check_video(info, mean, peak, a)
     if a.sheet:
         contact_sheet(a.target, a.sheet, [int(x) for x in a.safe.split(",")], a)
