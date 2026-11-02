@@ -26,6 +26,13 @@ Léelo tal cual está escrito: los subtítulos coinciden palabra por palabra con
 - Duración objetivo: unos 29 s (66 palabras). Si te sale más de 31 s, léelo un poco más rápido o dime y recortamos el guion.
 - Formato: WAV, M4A o MP3. Cualquier micrófono sirve; grábalo en un sitio sin eco.
 
+## Qué debe salir en la toma (se comprueba al recibirla)
+
+- **Duración total: 27 a 31 s.** La primera toma duró 16,2 s, con solo 8,9 s de voz: faltaban líneas o iba muy deprisa.
+- **14 fragmentos de voz**, uno por línea, separados por pausas de unos 0,5 s. En la primera toma se detectaron 10 y varios de menos de 0,4 s, demasiado cortos para una línea entera.
+- **Volumen:** acércate al micrófono (unos 15 a 20 cm) y habla con firmeza. La primera toma tenía −31,1 dB de media y −12,5 dB de pico; tu marca pide una media entre −30 y −10 dB y un pico por debajo de −0,5 dB. Apunta a una media cercana a −20 dB, sin que se sature.
+- Si una línea te sale mal, repite solo esa línea después de la última y dime el número.
+
 ## Cuando tengas el audio
 
 Adjúntalo en el chat, o súbelo a `reels/subtitulos-claros/audio/` en la rama `ccr-5a811ee7-i8nuiw`. Yo haré:
