@@ -18,7 +18,7 @@ Primer reel real hecho con las skills de reels. Tema y llamada a la acción (ا�
 
 ## Lo que falta
 
-- Voz: no hay grabación. Los tiempos de `captions.json` son estimados.
+- Voz: la graba el usuario (decisión del 2026-11-02); texto y pautas en `lectura.md`. Los tiempos de `captions.json` siguen estimados hasta tener el audio.
 - Metraje: el reel es solo texto sobre el fondo de marca y una barra de progreso.
 - Render: hecho una vez en el entorno de pruebas con el Chromium local (`--browser-executable`); `out/` no se sube a git. Con Cairo real el texto sale conectado y centrado. Para repetirlo: `npm install --ignore-scripts && npm run render` (en otra máquina, Remotion descarga Chrome).
 - Audio: el MP4 no tiene pista de audio; `reel-export` lo rechazará hasta que exista la voz, a propósito.
